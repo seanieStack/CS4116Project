@@ -1,8 +1,21 @@
 "use client"
 import ColorModeToggle from "@/components/ColorModeToggle";
 import {Bars3Icon, XMarkIcon} from "@heroicons/react/24/outline";
+import {usePathname} from "next/navigation";
 
 export default function Navbar() {
+
+    const pathName = usePathname();
+
+    const navLinks = [
+            { name: "Landing", href: "/" },
+            { name: "Services", href: "/services" },
+            { name: "Business Panel", href: "/business-panel" },
+            { name: "Admin Panel", href: "/admin-panel" },
+            { name: "Contact", href: "/contact" }
+        ]
+
+
     return (
         <header className="flex flex-wrap lg:justify-start lg:flex-nowrap w-full h-16 bg-white text-sm py-3 dark:bg-neutral-800">
             <nav className="max-w-[100rem] mx-auto px-0 lg:px-4 flex flex-wrap basis-full items-center justify-between">
@@ -13,22 +26,21 @@ export default function Navbar() {
                         <XMarkIcon className="hs-collapse-open:block hidden shrink-0 "/>
                         <span className="sr-only">Toggle</span>
                     </button>
-                    <a href="/login" className="py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-800 shadow-sm hover:bg-gray-50 focus:outline-none focus:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-800 dark:border-neutral-700 dark:text-white dark:hover:bg-neutral-700 dark:focus:bg-neutral-700">
+                    <a href="/login" className={`py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium rounded-lg border border-gray-200 ${pathName === "/login" ? "bg-blue-500" : "bg-white dark:bg-neutral-800"} text-gray-800 shadow-sm hover:bg-gray-50 focus:outline-none focus:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none  dark:border-neutral-700 dark:text-white dark:hover:bg-neutral-700 dark:focus:bg-neutral-700`}>
                         Sign In / Sign Up
                     </a>
                     <ColorModeToggle />
                 </div>
                 <div id="hs-navbar-alignment" className="hs-collapse hidden overflow-hidden transition-[height,opacity] duration-300 basis-full bg-white dark:bg-neutral-800 grow-1 lg:grow-0 lg:basis-auto lg:block lg:order-2 z-50 w-max" aria-labelledby="hs-navbar-alignment-collapse">
                     <div className="flex flex-col gap-5 mt-5 lg:flex-row lg:items-center lg:mt-0 lg:ps-5 px-4 max-lg:pb-4">
-                        <a className="font-medium text-blue-500 focus:outline-none" href="#" aria-current="page">Landing</a>
-                        <hr className="lg:hidden m-0 p-0"/>
-                        <a className="font-medium text-gray-600 hover:text-gray-400 focus:outline-none focus:text-gray-400 dark:text-neutral-400 dark:hover:text-neutral-500 dark:focus:text-neutral-500" href="#">Services</a>
-                        <hr className="lg:hidden m-0 p-0"/>
-                        <a className="font-medium text-gray-600 hover:text-gray-400 focus:outline-none focus:text-gray-400 dark:text-neutral-400 dark:hover:text-neutral-500 dark:focus:text-neutral-500" href="#">Business Panel</a>
-                        <hr className="lg:hidden m-0 p-0"/>
-                        <a className="font-medium text-gray-600 hover:text-gray-400 focus:outline-none focus:text-gray-400 dark:text-neutral-400 dark:hover:text-neutral-500 dark:focus:text-neutral-500" href="#">Admin Panel</a>
-                        <hr className="lg:hidden m-0 p-0"/>
-                        <a className="font-medium text-gray-600 hover:text-gray-400 focus:outline-none focus:text-gray-400 dark:text-neutral-400 dark:hover:text-neutral-500 dark:focus:text-neutral-500" href="#">Contact</a>
+                        {
+                            navLinks.map((link, index) => (
+                                <div key={index}>
+                                    <a href={link.href} className={`font-medium focus:outline-none ${pathName === link.href ? "text-blue-500" : "text-gray-600 hover:text-gray-400 focus:outline-none focus:text-gray-400 dark:text-neutral-400 dark:hover:text-neutral-500 dark:focus:text-neutral-500"}`}>{link.name}</a>
+                                    <hr className="lg:hidden my-2 p-0"/>
+                                </div>
+                            ))
+                        }
                     </div>
                 </div>
             </nav>
