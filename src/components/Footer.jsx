@@ -1,3 +1,5 @@
+"use client"
+
 export default function Footer(){
     return (
         <footer className="flex flex-wrap md:justify-start md:flex-nowrap w-full h-16 bg-blue-400 text-sm py-3 dark:bg-blue-950">
