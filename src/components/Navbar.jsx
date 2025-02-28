@@ -27,7 +27,7 @@ export default function Navbar() {
                         <XMarkIcon className="hs-collapse-open:block hidden shrink-0 "/>
                         <span className="sr-only">Toggle</span>
                     </button>
-                    <Link href="/login" className={`py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium rounded-lg border border-gray-200 ${(pathName === "/login" || pathName === "/register") ? "bg-blue-500" : "bg-white dark:bg-neutral-800"} text-gray-800 shadow-sm hover:bg-gray-50 focus:outline-none focus:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none  dark:border-neutral-700 dark:text-white dark:hover:bg-neutral-700 dark:focus:bg-neutral-700`}>
+                    <Link href="/login" className={`hidden lg:inline-flex py-2 px-3 items-center gap-x-2 text-sm font-medium rounded-lg border border-gray-200 ${pathName === "/login" || pathName === "/register" ? "bg-blue-500" : "bg-white dark:bg-neutral-800"} text-gray-800 shadow-sm hover:bg-gray-50 focus:outline-none focus:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none dark:border-neutral-700 dark:text-white dark:hover:bg-neutral-700 dark:focus:bg-neutral-700`}>
                         Sign In / Sign Up
                     </Link>
                     <ColorModeToggle />
@@ -42,6 +42,13 @@ export default function Navbar() {
                                 </div>
                             ))
                         }
+
+                        <div className="lg:hidden">
+                            <Link href="/login" className={`w-full text-center py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium rounded-lg border border-gray-200 ${pathName === "/login" || pathName === "/register" ? "bg-blue-500" : "bg-white dark:bg-neutral-800"} text-gray-800 shadow-sm hover:bg-gray-50 focus:outline-none focus:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none dark:border-neutral-700 dark:text-white dark:hover:bg-neutral-700 dark:focus:bg-neutral-700`}>
+                                Sign In / Sign Up
+                            </Link>
+                        </div>
+
                     </div>
                 </div>
             </nav>
