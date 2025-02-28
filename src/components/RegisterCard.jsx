@@ -1,16 +1,13 @@
 "use client"
 
-import {useState} from "react";
 import InputBox from "@/components/InputBox";
 import Link from "next/link";
 
 export default function RegisterCard(){
-    const [isLogin, setIsLogin] = useState(true);
-
     return (
         <div className="bg-white text-black p-8 rounded-lg shadow-lg w-96 dark:bg-neutral-800 dark:text-white">
             <h2 className="text-2xl font-bold text-center mb-6">
-                {isLogin ? 'Login' : 'Register'}
+                Register
             </h2>
             <form>
                 <div className="py-2">
@@ -41,7 +38,7 @@ export default function RegisterCard(){
                     </label>
                 </div>
                 <button type="submit" className="w-full bg-blue-500 text-white py-3 rounded-md mt-4 hover:bg-blue-600">
-                    {isLogin ? 'Login' : 'Register'}
+                    Register
                 </button>
             </form>
 
