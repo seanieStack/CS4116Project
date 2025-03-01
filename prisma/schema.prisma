@@ -1,0 +1,150 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum ActionType {
+  BAN_USER
+  UNBAN_USER
+  BAN_BUSINESS
+  UNBAN_BUSINESS
+  REMOVE_REVIEW
+  REMOVE_PRODUCT
+}
+
+model Admin {
+  id          String   @id @default(cuid())
+  name        String
+  email       String   @unique
+  password    String   @db.VarChar(255)
+  banned      Boolean  @default(false)
+  profile_img String?
+
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  actionsGiven AdminAction[] @relation("AdminToAdminAction")
+}
+
+model User {
+  id          String   @id @default(cuid())
+  name        String
+  email       String   @unique
+  password    String   @db.VarChar(255)
+  banned      Boolean  @default(false)
+  profile_img String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  // Foreign keys
+  orders  Order[]
+  reviews Review[]
+  sentMessages     Message[] @relation("SenderRelation")
+  receivedMessages Message[] @relation("ReceiverRelation")
+  actionsAgainstMe AdminAction[] @relation("UserToAdminAction")
+}
+
+model AdminAction {
+  id      String     @id @default(cuid())
+  action  ActionType
+  details String?
+
+  // Foreign keys
+  adminId    String
+  userId     String?
+  businessId String?
+  reviewId   String?
+  productId  String?
+
+  // Relations
+  admin    Admin    @relation("AdminToAdminAction", fields: [adminId], references: [id])
+  user     User?    @relation("UserToAdminAction",  fields: [userId],  references: [id])
+  business Business? @relation(fields: [businessId], references: [id])
+  review   Review?   @relation(fields: [reviewId],   references: [id])
+  product  Service?  @relation(fields: [productId],  references: [id])
+}
+
+model Business {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  logo        String?
+  location    String?
+
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  // Foreign key
+  Service      Service[]
+  Order        Order[]
+  Review       Review[]
+  AdminAction  AdminAction[]
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  content    String
+  created_at DateTime @default(now())
+
+  // Foreign keys
+  senderId   String
+  receiverId String
+
+  // Relations
+  sender   User @relation("SenderRelation",   fields: [senderId],   references: [id])
+  receiver User @relation("ReceiverRelation", fields: [receiverId], references: [id])
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  rating     Int      @default(5)
+  comment    String?
+  created_at DateTime @default(now())
+
+  // Foreign keys
+  customerId String
+  businessId String
+
+  // Relations
+  customer   User     @relation(fields: [customerId], references: [id])
+  business   Business @relation(fields: [businessId], references: [id])
+  AdminAction AdminAction[]
+}
+
+model Order {
+  id         String   @id @default(cuid())
+  created_at DateTime @default(now())
+
+  // Foreign keys
+  customerId String
+  businessId String
+  productId  String
+
+  // Relations
+  customer User     @relation(fields: [customerId], references: [id])
+  business Business @relation(fields: [businessId], references: [id])
+  product  Service  @relation(fields: [productId],   references: [id])
+}
+
+
+model Service {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  price       Float    @default(0.0)
+  stock       Int      @default(0)
+  image       String?
+  created_at  DateTime @default(now())
+
+  // Foreign key
+  businessId  String
+
+  // Relation
+  business   Business    @relation(fields: [businessId], references: [id])
+  Order      Order[]
+  AdminAction AdminAction[]
+}
