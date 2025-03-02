@@ -35,6 +35,7 @@ model User {
   name        String
   email       String   @unique
   password    String   @db.VarChar(255)
+  salt        String   @db.VarChar(255)
   banned      Boolean  @default(false)
   profile_img String?
   created_at  DateTime @default(now())
@@ -46,6 +47,7 @@ model User {
   sentMessages     Message[] @relation("SenderRelation")
   receivedMessages Message[] @relation("ReceiverRelation")
   actionsAgainstMe AdminAction[] @relation("UserToAdminAction")
+  Session Session[]
 }
 
 model AdminAction {
@@ -130,7 +132,6 @@ model Order {
   product  Service  @relation(fields: [productId],   references: [id])
 }
 
-
 model Service {
   id          String   @id @default(cuid())
   name        String
@@ -147,4 +148,14 @@ model Service {
   business   Business    @relation(fields: [businessId], references: [id])
   Order      Order[]
   AdminAction AdminAction[]
+}
+
+model Session {
+  id         String   @id @default(cuid())
+  sessionId  String   @unique @db.VarChar(512)
+  expires_at DateTime
+
+  // Foreign key
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
