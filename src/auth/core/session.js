@@ -45,3 +45,17 @@ export async function getUserFromSession(cookie) {
 
     return getUserSessionById(sessionId);
 }
+
+export async function removeUserSession(cookie){
+    const sessionId = cookie.get("sessionId")?.value;
+
+    if (!sessionId) return;
+
+    await prisma.session.delete({
+        where: {
+            sessionId: sessionId
+        }
+    });
+
+    cookie.delete("sessionId");
+}

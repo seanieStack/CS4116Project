@@ -2,8 +2,9 @@
 
 import {prisma} from "@/lib/prisma";
 import {generateSalt, hashPassword, comparePassword} from "@/auth/core/password";
-import {createUserSession} from "@/auth/core/session";
+import {createUserSession, removeUserSession} from "@/auth/core/session";
 import {redirect} from "next/navigation";
+import {cookies} from "next/headers";
 
 export async function signUp(data){
 
@@ -54,6 +55,11 @@ export async function signIn(data) {
 
     await createUserSession(user);
 
+    redirect("/")
+}
+
+export async function signOut() {
+    await removeUserSession(await cookies())
     redirect("/")
 }
 
