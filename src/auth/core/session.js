@@ -33,8 +33,6 @@ async function getUserSessionById(sessionId) {
         }
     });
 
-    console.log(user)
-
     if (!user) return null;
 
     return user;
@@ -42,8 +40,6 @@ async function getUserSessionById(sessionId) {
 
 export async function getUserFromSession(cookie) {
     const sessionId = cookie.get("sessionId")?.value;
-
-    console.log("sessionId", sessionId);
 
     if (!sessionId) return null;
 

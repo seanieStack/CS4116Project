@@ -2,7 +2,7 @@
 
 import {cookies} from "next/headers";
 import {cache} from "react";
-import {getUserFromSession} from "@/auth/core/Session";
+import {getUserFromSession} from "@/auth/core/session";
 
 export const getCurrentUser = cache(
     async () => {

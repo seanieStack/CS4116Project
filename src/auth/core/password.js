@@ -14,3 +14,8 @@ export function hashPassword(password, salt) {
 export function generateSalt() {
     return crypto.randomBytes(16).toString('hex').normalize();
 }
+
+export async function comparePassword(hashedPassword, attemptedPassword, salt) {
+    const hashedAttemptedPassword = await hashPassword(attemptedPassword, salt);
+    return crypto.timingSafeEqual(Buffer.from(hashedPassword, "hex"), Buffer.from(hashedAttemptedPassword, "hex"));
+}
