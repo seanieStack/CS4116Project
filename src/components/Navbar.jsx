@@ -34,7 +34,7 @@ export default async function Navbar() {
                 <div id="hs-navbar-alignment"
                      className="hs-collapse hidden overflow-hidden transition-[height,opacity] duration-300 basis-full bg-white dark:bg-neutral-800 grow-1 lg:grow-0 lg:basis-auto lg:block lg:order-2 z-50 w-max"
                      aria-labelledby="hs-navbar-alignment-collapse">
-                    <NavbarLinks user={user}/>
+                    <NavbarLinks user={user}>{!user ?  (<LoginButton hidden={true}/>) : (<LogoutButton hidden={true}/>)}</NavbarLinks>
                 </div>
             </nav>
         </header>
