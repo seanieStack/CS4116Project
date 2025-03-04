@@ -10,7 +10,8 @@ export async function createUserSession(user) {
     await prisma.session.create({
         data: {
             sessionId: sessionId,
-            userId: user.id,
+            role: user.role.toString().toUpperCase(),
+            targetId: user.id,
             expires_at: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30 * 7)
         }
     });
