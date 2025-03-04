@@ -24,6 +24,7 @@
     "eslint-config-next": "15.1.7",
     "postcss": "^8",
     "prisma": "^6.4.1",
+    "prisma-erd-generator": "^2.0.4",
     "tailwindcss": "^3.4.1"
   }
 }

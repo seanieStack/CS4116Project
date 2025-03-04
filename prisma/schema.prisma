@@ -7,6 +7,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+generator erd {
+  provider = "prisma-erd-generator"
+  output   = "./ERD.svg"
+  erdDebug = true
+}
+
 enum ActionType {
   BAN_USER
   UNBAN_USER
@@ -14,6 +20,25 @@ enum ActionType {
   UNBAN_BUSINESS
   REMOVE_REVIEW
   REMOVE_PRODUCT
+}
+
+enum TargetType {
+  USER
+  BUSINESS
+  REVIEW
+  SERVICE
+}
+
+model AdminAction {
+  id        String     @id @default(cuid())
+  action    ActionType
+  details   String?
+
+  targetId   String
+  targetType TargetType
+
+  adminId String
+  admin   Admin @relation(fields: [adminId], references: [id])
 }
 
 model Admin {
@@ -27,7 +52,7 @@ model Admin {
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 
-  actionsGiven AdminAction[] @relation("AdminToAdminAction")
+  AdminAction AdminAction[]
 }
 
 model User {
@@ -46,28 +71,7 @@ model User {
   reviews Review[]
   sentMessages     Message[] @relation("SenderRelation")
   receivedMessages Message[] @relation("ReceiverRelation")
-  actionsAgainstMe AdminAction[] @relation("UserToAdminAction")
   Session Session[]
-}
-
-model AdminAction {
-  id      String     @id @default(cuid())
-  action  ActionType
-  details String?
-
-  // Foreign keys
-  adminId    String
-  userId     String?
-  businessId String?
-  reviewId   String?
-  productId  String?
-
-  // Relations
-  admin    Admin    @relation("AdminToAdminAction", fields: [adminId], references: [id])
-  user     User?    @relation("UserToAdminAction",  fields: [userId],  references: [id])
-  business Business? @relation(fields: [businessId], references: [id])
-  review   Review?   @relation(fields: [reviewId],   references: [id])
-  product  Service?  @relation(fields: [productId],  references: [id])
 }
 
 model Business {
@@ -84,7 +88,6 @@ model Business {
   Service      Service[]
   Order        Order[]
   Review       Review[]
-  AdminAction  AdminAction[]
 }
 
 model Message {
@@ -114,7 +117,6 @@ model Review {
   // Relations
   customer   User     @relation(fields: [customerId], references: [id])
   business   Business @relation(fields: [businessId], references: [id])
-  AdminAction AdminAction[]
 }
 
 model Order {
@@ -147,7 +149,6 @@ model Service {
   // Relation
   business   Business    @relation(fields: [businessId], references: [id])
   Order      Order[]
-  AdminAction AdminAction[]
 }
 
 model Session {
