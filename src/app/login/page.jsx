@@ -1,7 +1,14 @@
 import Navbar from "@/components/Navbar";
 import LoginCard from "@/components/LoginCard";
+import {getSession} from "@/auth/core/session";
+import {redirect} from "next/navigation";
 
 export default function login(){
+
+    if(getSession() !== null){
+        redirect("/")
+    }
+
     return (
         <>
             <Navbar/>

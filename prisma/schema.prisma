@@ -22,7 +22,7 @@ enum ActionType {
   REMOVE_PRODUCT
 }
 
-enum TargetType {
+enum AdminActionTargetType {
   USER
   BUSINESS
   REVIEW
@@ -30,32 +30,32 @@ enum TargetType {
 }
 
 model AdminAction {
-  id        String     @id @default(cuid())
-  action    ActionType
-  details   String?
+  id      String     @id @default(cuid())
+  action  ActionType
+  details String?
 
   targetId   String
-  targetType TargetType
+  targetType AdminActionTargetType
 
   adminId String
-  admin   Admin @relation(fields: [adminId], references: [id])
+  admin   Admin  @relation(fields: [adminId], references: [id])
 }
 
 model Admin {
-  id          String   @id @default(cuid())
+  id          String  @id @default(cuid())
   name        String
-  email       String   @unique
-  password    String   @db.VarChar(255)
-  banned      Boolean  @default(false)
+  email       String  @unique
+  password    String  @db.VarChar(255)
+  banned      Boolean @default(false)
   profile_img String?
 
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
   AdminAction AdminAction[]
 }
 
-model User {
+model Buyer {
   id          String   @id @default(cuid())
   name        String
   email       String   @unique
@@ -67,27 +67,29 @@ model User {
   updated_at  DateTime @updatedAt
 
   // Foreign keys
-  orders  Order[]
-  reviews Review[]
+  orders           Order[]
+  reviews          Review[]
   sentMessages     Message[] @relation("SenderRelation")
   receivedMessages Message[] @relation("ReceiverRelation")
-  Session Session[]
 }
 
 model Business {
-  id          String   @id @default(cuid())
+  id          String  @id @default(cuid())
   name        String
+  email       String @unique
+  password    String @db.VarChar(255)
+  salt        String @db.VarChar(255)
+
   description String?
   logo        String?
-  location    String?
 
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
   // Foreign key
-  Service      Service[]
-  Order        Order[]
-  Review       Review[]
+  Service Service[]
+  Order   Order[]
+  Review  Review[]
 }
 
 model Message {
@@ -100,8 +102,8 @@ model Message {
   receiverId String
 
   // Relations
-  sender   User @relation("SenderRelation",   fields: [senderId],   references: [id])
-  receiver User @relation("ReceiverRelation", fields: [receiverId], references: [id])
+  sender   Buyer @relation("SenderRelation", fields: [senderId], references: [id])
+  receiver Buyer @relation("ReceiverRelation", fields: [receiverId], references: [id])
 }
 
 model Review {
@@ -115,8 +117,8 @@ model Review {
   businessId String
 
   // Relations
-  customer   User     @relation(fields: [customerId], references: [id])
-  business   Business @relation(fields: [businessId], references: [id])
+  customer Buyer    @relation(fields: [customerId], references: [id])
+  business Business @relation(fields: [businessId], references: [id])
 }
 
 model Order {
@@ -129,9 +131,9 @@ model Order {
   productId  String
 
   // Relations
-  customer User     @relation(fields: [customerId], references: [id])
+  customer Buyer    @relation(fields: [customerId], references: [id])
   business Business @relation(fields: [businessId], references: [id])
-  product  Service  @relation(fields: [productId],   references: [id])
+  product  Service  @relation(fields: [productId], references: [id])
 }
 
 model Service {
@@ -144,19 +146,25 @@ model Service {
   created_at  DateTime @default(now())
 
   // Foreign key
-  businessId  String
+  businessId String
 
   // Relation
-  business   Business    @relation(fields: [businessId], references: [id])
-  Order      Order[]
+  business Business @relation(fields: [businessId], references: [id])
+  Order    Order[]
+}
+
+enum Role {
+  BUYER
+  BUSINESS
+  ADMIN
 }
 
 model Session {
   id         String   @id @default(cuid())
   sessionId  String   @unique @db.VarChar(512)
+  role       String
   expires_at DateTime
 
-  // Foreign key
-  userId String
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  targetId   String
+  targetType Role
 }

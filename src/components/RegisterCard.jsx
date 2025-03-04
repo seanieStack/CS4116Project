@@ -11,7 +11,7 @@ export default function RegisterCard(){
         email: "",
         password: "",
         confirmPassword: "",
-        role: "Buyer"
+        role: "BUYER"
     });
 
     const [error, setError] = useState({});
@@ -20,8 +20,7 @@ export default function RegisterCard(){
         e.preventDefault();
         const error = await signUp(formData)
         if (error) {
-            console.log(error)
-            setError(error)
+            setError(error);
         }
     }
 
@@ -73,8 +72,8 @@ export default function RegisterCard(){
                         <input
                             type="radio"
                             name="role"
-                            value="Buyer"
-                            checked={formData.role === "Buyer"}
+                            value="BUYER"
+                            checked={formData.role === "BUYER"}
                             onChange={handleChange}
                             className="shrink-0 mt-0.5 border-gray-200 rounded-full text-blue-600 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-800 dark:border-neutral-700 dark:checked:bg-blue-500 dark:checked:border-blue-500 dark:focus:ring-offset-gray-800"
                             id="hs-radio-in-form"/>
@@ -86,8 +85,8 @@ export default function RegisterCard(){
                         <input
                             type="radio"
                             name="role"
-                            value="Business"
-                            checked={formData.role === "Business"}
+                            value="BUSINESS"
+                            checked={formData.role === "BUSINESS"}
                             onChange={handleChange}
                             className="shrink-0 mt-0.5 border-gray-200 rounded-full text-blue-600 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-800 dark:border-neutral-700 dark:checked:bg-blue-500 dark:checked:border-blue-500 dark:focus:ring-offset-gray-800"
                             id="hs-radio-checked-in-form"/>
