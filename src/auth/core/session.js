@@ -7,10 +7,6 @@ import crypto from 'crypto';
 export async function createUserSession(user, role) {
     const sessionId = crypto.randomBytes(256).toString("hex").normalize();
 
-    console.log("Creating session for user: ");
-    console.log(user);
-
-
     await prisma.session.create({
         data: {
             sessionId: sessionId,
@@ -40,8 +36,6 @@ async function getSessionById(sessionId) {
     });
 
     if (!user) return null;
-
-    console.log(user);
 
     return user;
 }
