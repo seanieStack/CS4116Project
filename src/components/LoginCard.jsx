@@ -18,7 +18,6 @@ export default function LoginCard(){
         e.preventDefault();
         const error = await signIn(formData)
         if (error) {
-            console.log(error)
             setError(error)
         }
     }

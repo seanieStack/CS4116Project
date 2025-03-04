@@ -25,43 +25,21 @@ export async function signUp(data){
 
     if (existingUser || existingBusiness) return "User or business already exists";
 
-    try {
-        const salt = generateSalt();
-        const hashedPassword = await hashPassword(data.password, salt);
+    const salt = generateSalt();
+    const hashedPassword = await hashPassword(data.password, salt);
 
-        if (data.role === "Buyer") {
-
-        const user = await prisma.buyer.create({
-            data: {
-                name: data.email,
-                email: data.email,
-                password: hashedPassword,
-                salt: salt,
-                banned: false,
-            }
-        })
-        if (user === null) return "Unable to create user";
-
-        await createUserSession(user, data.role);
+    const user = await prisma.buyer.create({
+        data: {
+            name: data.email,
+            email: data.email,
+            password: hashedPassword,
+            salt: salt,
+            banned: false,
         }
+    })
+    if (user === null) return "Unable to create user";
 
-        else if (data.role === "Business") {
-            const business = await prisma.business.create({
-                data: {
-                    name: data.email,
-                    email: data.email,
-                    password: hashedPassword,
-                    salt: salt,
-                }
-            })
-            if (business === null) return "Unable to create business";
-
-            await createUserSession(business, data.role);
-        }
-
-    } catch {
-        return "Error occurred while creating user";
-    }
+    await createUserSession(user, data.role);
 
     redirect("/")
 }

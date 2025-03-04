@@ -2,14 +2,14 @@
 import ColorModeToggle from "@/components/ColorModeToggle";
 import {Bars3Icon, XMarkIcon} from "@heroicons/react/24/outline";
 import Link from "next/link";
-import {getCurrentUser} from "@/auth/nextjs/currentUser";
+import {getCurrentSessionInfo} from "@/auth/nextjs/currentUser";
 import NavbarLinks from "@/components/NavbarLinks";
 import LoginButton from "@/components/LoginButton";
 import LogoutButton from "@/components/LogoutButton";
 
 export default async function Navbar() {
 
-    const user = await getCurrentUser();
+    const user = await getCurrentSessionInfo();
 
     return (
         <header
