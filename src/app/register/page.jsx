@@ -1,11 +1,11 @@
 import Navbar from "@/components/Navbar";
 import RegisterCard from "@/components/RegisterCard";
-import {getSession} from "@/auth/core/session";
 import {redirect} from "next/navigation";
+import {getCurrentSessionInfo} from "@/auth/nextjs/currentUser";
 
 export default function login(){
 
-    if(getSession() !== null){
+    if(getCurrentSessionInfo() !== null){
         redirect("/")
     }
 
