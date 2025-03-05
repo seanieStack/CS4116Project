@@ -28,16 +28,29 @@ export async function signUp(data){
     const salt = generateSalt();
     const hashedPassword = await hashPassword(data.password, salt);
 
-    const user = await prisma.buyer.create({
-        data: {
-            name: data.email,
-            email: data.email,
-            password: hashedPassword,
-            salt: salt,
-            banned: false,
-        }
-    })
+    let user;
+
+    if (data.role === "BUYER") {
+        user = await prisma.buyer.create({
+            data: {
+                name: data.email,
+                email: data.email,
+                password: hashedPassword,
+                salt: salt,
+            }
+        })
+    } else if (data.role === "BUSINESS") {
+        user = await prisma.business.create({
+            data: {
+                name: data.email,
+                email: data.email,
+                password: hashedPassword,
+                salt: salt,
+            }
+        });
+    }
     if (user === null) return "Unable to create user";
+
 
     await createUserSession(user, data.role);
 
@@ -63,7 +76,7 @@ export async function signIn(data) {
 
     if (!await comparePassword(user.password, data.password, user.salt)) return "Incorrect password";
 
-    await createUserSession(user);
+    await createUserSession(user, user ? "BUYER" : "BUSINESS");
 
     redirect("/")
 }
