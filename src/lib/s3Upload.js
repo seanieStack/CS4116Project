@@ -16,7 +16,7 @@ export async function uploadToS3(fileBuffer, fileName, contentType, directory = 
         const key = directory ? `${directory}/${uniqueFileName}` : uniqueFileName;
 
         const params = {
-            Bucket: process.env.AWS_S3_BUCKET_NAME,
+            Bucket: process.env.ENV_AWS_S3_BUCKET_NAME,
             Key: key,
             Body: fileBuffer,
             ContentType: contentType,
@@ -25,7 +25,7 @@ export async function uploadToS3(fileBuffer, fileName, contentType, directory = 
         const command = new PutObjectCommand(params);
         await s3Client.send(command);
 
-        return `https://${process.env.AWS_S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+        return `https://${process.env.ENV_AWS_S3_BUCKET_NAME}.s3.${process.env.ENV_AWS_REGION}.amazonaws.com/${key}`;
     } catch (error) {
 
         console.error(error);
