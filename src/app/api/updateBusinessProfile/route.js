@@ -19,7 +19,7 @@ export async function POST(request) {
             data: {
                 name: name,
                 description: bio,
-                profile_img: profileImage,
+                logo: profileImage,
             },
         });
 
