@@ -26,7 +26,6 @@ export default function BusinessProfileCard({user}) {
         setLoading(true);
         setError("");
         setSuccess(false);
-
         try {
 
             console.log(formData);
