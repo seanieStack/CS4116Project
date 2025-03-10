@@ -2,14 +2,16 @@
 import ColorModeToggle from "@/components/ColorModeToggle";
 import {Bars3Icon, XMarkIcon} from "@heroicons/react/24/outline";
 import Link from "next/link";
-import {getCurrentSessionInfo} from "@/auth/nextjs/currentUser";
+import {getCurrentSessionInfo, getCurrentUser} from "@/auth/nextjs/currentUser";
 import NavbarLinks from "@/components/NavbarLinks";
 import LoginButton from "@/components/LoginButton";
 import LogoutButton from "@/components/LogoutButton";
+import Avatar from "@/components/Avatar";
 
 export default async function Navbar() {
 
-    const user = await getCurrentSessionInfo();
+    const sessionInfo = await getCurrentSessionInfo();
+    const user = sessionInfo ? await getCurrentUser() : null;
 
     return (
         <header
@@ -27,14 +29,14 @@ export default async function Navbar() {
                         <XMarkIcon className="hs-collapse-open:block hidden shrink-0 "/>
                         <span className="sr-only">Toggle</span>
                     </button>
-                    {!user ?  (<LoginButton />) : (<LogoutButton />)}
+                    {!sessionInfo ?  (<LoginButton />) : (<Avatar user={user} session={sessionInfo} />)}
 
                     <ColorModeToggle/>
                 </div>
                 <div id="hs-navbar-alignment"
                      className="hs-collapse hidden overflow-hidden transition-[height,opacity] duration-300 basis-full bg-white dark:bg-neutral-800 grow-1 lg:grow-0 lg:basis-auto lg:block lg:order-2 z-50 w-max"
                      aria-labelledby="hs-navbar-alignment-collapse">
-                    <NavbarLinks user={user}>{!user ?  (<LoginButton hidden={true}/>) : (<LogoutButton hidden={true}/>)}</NavbarLinks>
+                    <NavbarLinks user={sessionInfo}>{!sessionInfo ?  (<LoginButton hidden={true}/>) : null}</NavbarLinks>
                 </div>
             </nav>
         </header>

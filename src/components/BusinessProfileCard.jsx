@@ -3,9 +3,10 @@
 import { useState } from "react";
 import ImageUploader from "@/components/ImageUploader";
 
-export default function BuyerProfileCard({user}) {
+export default function BusinessProfileCard({user}) {
     const [formData, setFormData] = useState({
         name: "",
+        bio: "",
         profileImage: ""
     });
 
@@ -25,11 +26,10 @@ export default function BuyerProfileCard({user}) {
         setLoading(true);
         setError("");
         setSuccess(false);
-
         try {
 
             console.log(formData);
-            const response = await fetch("/api/updateBuyerProfile", {
+            const response = await fetch("/api/updateBusinessProfile", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -85,6 +85,20 @@ export default function BuyerProfileCard({user}) {
                         value={formData.name}
                         placeholder={user.name}
                         onChange={(e) => setFormData({...formData, name: e.target.value})}
+                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-neutral-700 dark:border-neutral-600"
+                    />
+                </div>
+
+                <div className="py-2">
+                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Description
+                    </label>
+                    <input
+                        type="text"
+                        id="Bio"
+                        value={formData.bio}
+                        placeholder={user.description}
+                        onChange={(e) => setFormData({...formData, bio: e.target.value})}
                         className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-neutral-700 dark:border-neutral-600"
                     />
                 </div>
