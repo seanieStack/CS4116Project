@@ -14,7 +14,7 @@ export default function Avatar({session, user}) {
     if (session.role === "BUSINESS") {
         url = user?.logo || "";
     }
-    else if (session.role === "USER") {
+    else if (session.role === "BUYER") {
         url = user?.profile_img || "";
     }
 
