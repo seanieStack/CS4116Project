@@ -1,40 +1,107 @@
 "use client"
 
+import { useState, useEffect } from "react";
 import InputBox from "@/components/InputBox";
 import Link from "next/link";
-import {useState} from "react";
-import {signIn} from "@/auth/nextjs/actions";
+import { signIn } from "@/auth/nextjs/actions";
 
-export default function LoginCard(){
-
+export default function LoginCard() {
     const [formData, setFormData] = useState({
         email: "",
         password: ""
     });
 
-    const [error, setError] = useState({});
+    const [error, setError] = useState(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    useEffect(() => {
+        console.log("LoginCard: Component initialized");
+    }, []);
+
+    const validateForm = () => {
+        try {
+            let validationErrors = null;
+
+            if (!formData.email) {
+                validationErrors = { message: "Email is required" };
+                return { isValid: false, errors: validationErrors };
+            }
+
+            if (!/\S+@\S+\.\S+/.test(formData.email)) {
+                validationErrors = { message: "Email is invalid" };
+                return { isValid: false, errors: validationErrors };
+            }
+
+            if (!formData.password) {
+                validationErrors = { message: "Password is required" };
+                return { isValid: false, errors: validationErrors };
+            }
+
+            return { isValid: true, errors: null };
+        } catch (err) {
+            console.error("LoginCard: Error validating form", err);
+            return { isValid: false, errors: { message: "Error validating form" } };
+        }
+    };
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
-        const error = await signIn(formData)
-        if (error) {
-            setError(error)
+        try {
+            e.preventDefault();
+            setIsSubmitting(true);
+            setError(null);
+
+            const { isValid, errors } = validateForm();
+            if (!isValid) {
+                setError(errors);
+                setIsSubmitting(false);
+                return;
+            }
+
+            console.log("LoginCard: Submitting login request", { email: formData.email });
+
+            const signInError = await signIn(formData).catch(err => {
+                console.error("LoginCard: Sign in action threw an error", err);
+                return "Authentication failed. Please try again.";
+            });
+
+            if (signInError) {
+                console.error("LoginCard: Sign in failed", { error: signInError });
+                setError(typeof signInError === 'string' ? { message: signInError } : signInError);
+            } else {
+                console.log("LoginCard: Sign in succeeded");
+            }
+        } catch (err) {
+            console.error("LoginCard: Unexpected error during sign in", err);
+            setError({ message: err.message || "An unexpected error occurred" });
+        } finally {
+            setIsSubmitting(false);
         }
-    }
+    };
 
     const handleChange = (e) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value
-        })
-    }
+        try {
+            const { name, value } = e.target;
+            console.log(`LoginCard: Field "${name}" changed`);
+
+            if (error) {
+                setError(null);
+            }
+
+            setFormData({
+                ...formData,
+                [name]: value
+            });
+        } catch (err) {
+            console.error("LoginCard: Error in handleChange", err);
+        }
+    };
 
     return (
         <div className="bg-white text-black p-8 rounded-lg shadow-lg w-96 dark:bg-neutral-800 dark:text-white">
             <h2 className="text-2xl font-bold text-center mb-6">
                 Login
             </h2>
-            {error && <div className="text-red-500 text-sm">{error.message}</div>}
+            {error && error.message && <div className="text-red-500 text-sm mb-4">{error.message}</div>}
             <form onSubmit={handleSubmit}>
                 <div className="py-2">
                     <InputBox
@@ -54,8 +121,12 @@ export default function LoginCard(){
                         value={formData.password}
                         onChange={handleChange} />
                 </div>
-                <button type="submit" className="w-full bg-blue-500 text-white py-3 rounded-md mt-4 hover:bg-blue-600">
-                    Login
+                <button
+                    type="submit"
+                    className="w-full bg-blue-500 text-white py-3 rounded-md mt-4 hover:bg-blue-600 disabled:opacity-50 disabled:pointer-events-none"
+                    disabled={isSubmitting}
+                >
+                    {isSubmitting ? "Logging in..." : "Login"}
                 </button>
             </form>
 

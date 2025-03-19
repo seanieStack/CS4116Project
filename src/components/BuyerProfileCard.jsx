@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import {useEffect, useState} from "react";
 import ImageUploader from "@/components/ImageUploader";
 
 export default function BuyerProfileCard({user}) {
@@ -9,11 +9,30 @@ export default function BuyerProfileCard({user}) {
         profileImage: ""
     });
 
-    const handleImageUpload = (imageUrl) => {
-        setFormData({
-            ...formData,
-            profileImage: imageUrl
+    useEffect(() => {
+        if (!user) {
+            console.error("BuyerProfileCard: user prop is missing");
+            setError("User information unavailable");
+            return;
+        }
+
+        console.log("BuyerProfileCard: User data loaded", {
+            userId: user.id,
+            hasName: !!user.name
         });
+    }, [user]);
+
+    const handleImageUpload = (imageUrl) => {
+        try {
+            console.log("BuyerProfileCard: Image uploaded", { imageUrl: imageUrl.substring(0, 50) + '...' });
+            setFormData({
+                ...formData,
+                profileImage: imageUrl
+            });
+        } catch (err) {
+            console.error("BuyerProfileCard: Error handling image upload", err);
+            setError("Failed to process uploaded image");
+        }
     };
 
     const [loading, setLoading] = useState(false);
@@ -26,9 +45,20 @@ export default function BuyerProfileCard({user}) {
         setError("");
         setSuccess(false);
 
-        try {
+        if (!user || !user.id) {
+            console.error("BuyerProfileCard: Missing user ID for profile update");
+            setError("Cannot update profile: User ID is missing");
+            setLoading(false);
+            return;
+        }
 
-            console.log(formData);
+        try {
+            console.log("BuyerProfileCard: Submitting form data", {
+                userId: user.id,
+                nameLength: formData.name.length,
+                hasImage: !!formData.profileImage
+            });
+
             const response = await fetch("/api/updateBuyerProfile", {
                 method: "POST",
                 headers: {
@@ -37,17 +67,46 @@ export default function BuyerProfileCard({user}) {
                 body: JSON.stringify({ id: user.id, ...formData }),
             });
 
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.message || "Failed to update profile");
+            if (!response) {
+                throw new Error("Network error: No response received");
             }
 
+            const data = await response.json().catch(err => {
+                console.error("BuyerProfileCard: Failed to parse response JSON", err);
+                throw new Error("Failed to parse server response");
+            });
+
+            if (!response.ok) {
+                console.error("BuyerProfileCard: API error response", {
+                    status: response.status,
+                    statusText: response.statusText,
+                    error: data?.message || "Unknown error"
+                });
+                throw new Error(data.message || `Failed to update profile (${response.status})`);
+            }
+
+            console.log("BuyerProfileCard: Profile updated successfully", { responseData: data });
             setSuccess(true);
         } catch (err) {
-            setError(err.message);
+            console.error("BuyerProfileCard: Error updating profile", err);
+            setError(err.message || "An unexpected error occurred");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleFieldChange = (fieldName, value) => {
+        try {
+            if (fieldName === "name" && value.length > 50) {
+                console.warn("BuyerProfileCard: Name exceeds recommended length", { length: value.length });
+                setError("Name should be less than 50 characters");
+            } else if (error && error.includes("Name")) {
+                setError("");
+            }
+
+            setFormData({...formData, [fieldName]: value});
+        } catch (err) {
+            console.error("BuyerProfileCard: Error handling field change", { fieldName, error: err });
         }
     };
 
@@ -84,7 +143,7 @@ export default function BuyerProfileCard({user}) {
                         id="name"
                         value={formData.name}
                         placeholder={user.name}
-                        onChange={(e) => setFormData({...formData, name: e.target.value})}
+                        onChange={(e) => handleFieldChange("name", e.target.value)}
                         className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-neutral-700 dark:border-neutral-600"
                     />
                 </div>

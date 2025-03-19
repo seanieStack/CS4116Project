@@ -7,32 +7,74 @@ import Link from "next/link";
 
 export default function Avatar({session, user}) {
     const [isOpen, setIsOpen] = useState(false);
+    const [error, setError] = useState(null);
     const dropdownRef = useRef(null);
 
     let url;
 
-    if (session.role === "BUSINESS") {
-        url = user?.logo || "";
+    if (!session) {
+        console.error("Avatar component: session prop is missing");
+        setError("Session information unavailable");
     }
-    else if (session.role === "BUYER") {
-        url = user?.profile_img || "";
+
+    if (!user) {
+        console.error("Avatar component: user prop is missing");
+        setError("User information unavailable");
+    }
+
+    try {
+        if (session?.role === "BUSINESS") {
+            url = user?.logo || "";
+            console.log("Avatar component: Loaded business profile", { hasLogo: !!user?.logo });
+        }
+        else if (session?.role === "BUYER") {
+            url = user?.profile_img || "";
+            console.log("Avatar component: Loaded buyer profile", { hasProfileImg: !!user?.profile_img });
+        } else {
+            console.warn(`Avatar component: Unknown role type: ${session?.role}`);
+            url = "";
+        }
+    } catch (err) {
+        console.error("Avatar component: Error determining avatar URL", err);
+        url = "";
+        setError("Error loading profile image");
     }
 
     useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-                setIsOpen(false);
-            }
-        };
+        try {
+            const handleClickOutside = (event) => {
+                if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                    setIsOpen(false);
+                }
+            };
 
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
-        };
+            document.addEventListener("mousedown", handleClickOutside);
+            return () => {
+                document.removeEventListener("mousedown", handleClickOutside);
+            };
+        } catch (err) {
+            console.error("Avatar component: Error in click outside handler", err);
+        }
     }, []);
 
     const handleAvatarClick = () => {
-        setIsOpen(!isOpen);
+        try {
+            setIsOpen(!isOpen);
+            console.log("Avatar component: Dropdown toggled", { isNowOpen: !isOpen });
+        } catch (err) {
+            console.error("Avatar component: Error toggling dropdown", err);
+            setError("Error opening menu");
+        }
+    };
+
+    const handleSignOut = async () => {
+        try {
+            console.log("Avatar component: Initiating sign out");
+            await signOut();
+        } catch (err) {
+            console.error("Avatar component: Error during sign out", err);
+            setError("Sign out failed. Please try again.");
+        }
     };
 
     const AvatarImage = () => {
@@ -50,6 +92,10 @@ export default function Avatar({session, user}) {
                     alt="avatar"
                     className="inline-block w-8 h-8 rounded-full object-cover cursor-pointer"
                     style={{ maxWidth: '32px', maxHeight: '32px' }}
+                    onError={(_) => {
+                        console.error("Avatar component: Failed to load image", { url });
+                        setError("Failed to load profile image");
+                    }}
                 />
             );
         }
@@ -57,6 +103,13 @@ export default function Avatar({session, user}) {
 
     return (
         <div className="relative" ref={dropdownRef}>
+
+            {error && (
+                <div className="absolute -top-10 right-0 bg-red-100 border border-red-400 text-red-700 px-2 py-1 rounded text-xs">
+                    {error}
+                </div>
+            )}
+
             <div onClick={handleAvatarClick}>
                 <AvatarImage />
             </div>
@@ -67,7 +120,7 @@ export default function Avatar({session, user}) {
                         href="/profile" className="block w-full px-4 py-2 text-sm  text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-md text-left">
                         Profile
                     </Link>
-                    <button onClick={signOut} className="block w-full px-4 py-2 text-sm text-red-600  hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-md text-left">
+                    <button onClick={handleSignOut} className="block w-full px-4 py-2 text-sm text-red-600  hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-md text-left">
                         Logout
                     </button>
                 </div>
