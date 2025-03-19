@@ -4,6 +4,16 @@ import {cookies} from "next/headers";
 import {cache} from "react";
 import {getSession, getUserFromSession} from "@/auth/core/session";
 
+/**
+ * Retrieves the current session info from cookies
+ *
+ * @async
+ * @function getCurrentSessionInfo
+ * @returns {Promise<Object|null>} A promise that resolves to the session object if found,
+ *                                 or null if no session exists or an error occurs
+ *
+ * @throws {Error} Catches errors internally and returns null
+ */
 export const getCurrentSessionInfo = cache(async () => {
     try {
         const session = await getSession(await cookies());
@@ -19,6 +29,19 @@ export const getCurrentSessionInfo = cache(async () => {
     }
 });
 
+/**
+ * Retrieves the currently authenticated user based on session info
+ *
+ * @async
+ * @function getCurrentUser
+ * @returns {Promise<Object|null>} A promise that resolves to the user object if found, or null if:
+ *   - No valid session exists
+ *   - No user is associated with the session
+ *   - An error occurs during retrieval
+ *
+ *
+ * @throws {Error} Catches errors internally and returns null
+ */
 export const getCurrentUser = cache(async () => {
     try {
         const session = await getCurrentSessionInfo();

@@ -6,6 +6,26 @@ import {createUserSession, removeUserSession} from "@/auth/core/session";
 import {redirect} from "next/navigation";
 import {cookies} from "next/headers";
 
+/**
+ * Creates a new user account and starts an authentication session
+ *
+ * Validates registration data, checks for existing accounts with the same email,
+ * hashes the password, creates the appropriate user record based on role,
+ * and starts an authentication session for the new user.
+ *
+ * @async
+ * @function signUp
+ * @param {Object} data - The user registration data
+ * @param {string} data.email - User's email address (required)
+ * @param {string} data.password - User's chosen password (required)
+ * @param {string} data.confirmPassword - Password confirmation (required, must match password)
+ * @param {string} data.role - User role, must be either "BUYER" or "BUSINESS" (required)
+ *
+ * @returns {Promise<string|undefined>} Error message string if registration fails, or undefined on success
+ *                                     (redirects to "/profile" on success)
+ *
+ * // On success, the function automatically redirects to "/profile"
+ */
 export async function signUp(data) {
     if (!data || !data.email || !data.password || !data.confirmPassword || !data.role) {
         console.error("Sign up failed: Missing required fields");
@@ -92,6 +112,24 @@ export async function signUp(data) {
     redirect("/profile");
 }
 
+/**
+ * Authenticates a user and creates an authentication session.
+ *
+ * Validates the provided credentials, looks up the user account across
+ * multiple account types (buyer, business, or admin), verifies the password,
+ * and creates an authentication session for the user.
+ *
+ * @async
+ * @function signIn
+ * @param {Object} data - The sign-in data
+ * @param {string} data.email - User's email address (required)
+ * @param {string} data.password - User's password (required)
+ *
+ * @returns {Promise<string|undefined>} Error message string if authentication fails, or undefined on success
+ *                                     (redirects to appropriate page on success)
+ *
+ * On success, the function automatically redirects to "/" for businesses or user and to the admin panel for admins
+ */
 export async function signIn(data) {
     if (!data || !data.email || !data.password) {
         console.error("Sign in failed: Missing required fields");
@@ -164,6 +202,19 @@ export async function signIn(data) {
     }
 }
 
+/**
+ * Signs out the current user by removing their session.
+ *
+ * Attempts to remove the user's session cookie and redirects to the homepage
+ * regardless of whether the sign-out operation succeeds or fails.
+ *
+ * @async
+ * @function signOut
+ * @returns {Promise<void>} This function doesn't return a value as it always redirects
+ *
+ *
+ * @throws {Error} Catches errors internally and redirects to the "/"
+ */
 export async function signOut() {
     try {
         await removeUserSession(await cookies());
