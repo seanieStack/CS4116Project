@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import {useState, useRef, useEffect} from "react";
 import { ArrowUpTrayIcon, PhotoIcon, XMarkIcon } from "@heroicons/react/24/outline";
 
 export default function ImageUploader({ onUploadComplete, maxSizeMB = 5, acceptedFileTypes = "image/*" }) {
@@ -12,53 +12,127 @@ export default function ImageUploader({ onUploadComplete, maxSizeMB = 5, accepte
 
     const maxSizeBytes = maxSizeMB * 1024 * 1024;
 
-    const handleFileChange = (e) => {
-        const selectedFile = e.target.files[0];
-        setError(null);
-
-        if (!selectedFile) return;
-
-        if (selectedFile.size > maxSizeBytes) {
-            setError(`File size exceeds the ${maxSizeMB}MB limit`);
-            return;
+    useEffect(() => {
+        if (!onUploadComplete || typeof onUploadComplete !== 'function') {
+            console.error("ImageUploader: onUploadComplete prop is missing or not a function");
         }
 
-        setFile(selectedFile);
+        console.log("ImageUploader: Component initialized", {
+            maxSizeMB,
+            acceptedFileTypes,
+            maxSizeBytes
+        });
+    }, [onUploadComplete, maxSizeMB, acceptedFileTypes, maxSizeBytes]);
 
-        const reader = new FileReader();
-        reader.onload = () => {
-            setPreview(reader.result);
-        };
-        reader.readAsDataURL(selectedFile);
+    const validateFile = (selectedFile) => {
+        try {
+            if (!selectedFile) {
+                console.warn("ImageUploader: No file selected");
+                return false;
+            }
+
+            if (selectedFile.size > maxSizeBytes) {
+                const fileSizeMB = (selectedFile.size / (1024 * 1024));
+                console.error(`ImageUploader: File size exceeds limit`, {
+                    fileName: selectedFile.name,
+                    fileSize: fileSizeMB + "MB",
+                    maxAllowed: maxSizeMB + "MB"
+                });
+                setError(`File size (${fileSizeMB}MB) exceeds the ${maxSizeMB}MB limit`);
+                return false;
+            }
+
+            console.log("ImageUploader: File validated successfully", {
+                fileName: selectedFile.name,
+                fileSize: (selectedFile.size / (1024 * 1024)).toFixed(2) + "MB",
+                fileType: selectedFile.type
+            });
+
+            return true;
+        } catch (err) {
+            console.error("ImageUploader: Error validating file", err);
+            setError("Error validating file");
+            return false;
+        }
+    };
+
+    const createPreview = (selectedFile) => {
+        try {
+            const reader = new FileReader();
+
+            reader.onload = () => {
+                setPreview(reader.result);
+                console.log("ImageUploader: Preview generated");
+            };
+
+            reader.onerror = (error) => {
+                console.error("ImageUploader: Error generating preview", error);
+                setError("Failed to generate image preview");
+            };
+
+            reader.readAsDataURL(selectedFile);
+        } catch (err) {
+            console.error("ImageUploader: Error creating preview", err);
+            setError("Failed to process image");
+        }
+    };
+
+    const handleFileChange = (e) => {
+        try {
+            setError(null);
+            const selectedFile = e.target.files[0];
+
+            if (!selectedFile) {
+                console.log("ImageUploader: File selection canceled");
+                return;
+            }
+
+            if (validateFile(selectedFile)) {
+                setFile(selectedFile);
+                createPreview(selectedFile);
+            }
+        } catch (err) {
+            console.error("ImageUploader: Error handling file change", err);
+            setError("Error selecting file");
+        }
     };
 
     const handleDrop = (e) => {
-        e.preventDefault();
-        setError(null);
+        try {
+            e.preventDefault();
+            setError(null);
 
-        const droppedFile = e.dataTransfer.files[0];
-        if (!droppedFile) return;
+            if (!e.dataTransfer.files || e.dataTransfer.files.length === 0) {
+                console.warn("ImageUploader: No files dropped");
+                return;
+            }
 
-        if (droppedFile.size > maxSizeBytes) {
-            setError(`File size exceeds the ${maxSizeMB}MB limit`);
-            return;
+            const droppedFile = e.dataTransfer.files[0];
+
+            if (validateFile(droppedFile)) {
+                setFile(droppedFile);
+                createPreview(droppedFile);
+            }
+        } catch (err) {
+            console.error("ImageUploader: Error handling file drop", err);
+            setError("Error processing dropped file");
         }
-
-        setFile(droppedFile);
-
-        const reader = new FileReader();
-        reader.onload = () => {
-            setPreview(reader.result);
-        };
-        reader.readAsDataURL(droppedFile);
     };
 
     const handleUpload = async () => {
-        if (!file) return;
+        if (!file) {
+            console.warn("ImageUploader: Attempted upload with no file");
+            return;
+        }
 
         try {
             setUploading(true);
             setError(null);
+
+            console.log("ImageUploader: Starting upload", {
+                fileName: file.name,
+                fileSize: (file.size / (1024 * 1024)).toFixed(2) + "MB"
+            });
 
             const formData = new FormData();
             formData.append("file", file);
@@ -68,31 +142,66 @@ export default function ImageUploader({ onUploadComplete, maxSizeMB = 5, accepte
                 body: formData,
             });
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || "Upload failed");
+            if (!response) {
+                throw new Error("Network error: No response received");
             }
 
-            const data = await response.json();
+            if (!response.ok) {
+                const errorData = await response.json().catch(err => {
+                    console.error("ImageUploader: Failed to parse error response", err);
+                    return { message: `Upload failed with status: ${response.status}` };
+                });
+
+                console.error("ImageUploader: Upload failed", {
+                    status: response.status,
+                    statusText: response.statusText,
+                    errorMessage: errorData.message || "Unknown error"
+                });
+
+                throw new Error(errorData.message || `Upload failed with status: ${response.status}`);
+            }
+
+            const data = await response.json().catch(err => {
+                console.error("ImageUploader: Failed to parse success response", err);
+                throw new Error("Failed to parse server response");
+            });
+
+            if (!data || !data.url) {
+                console.error("ImageUploader: Missing URL in response", data);
+                throw new Error("Server response missing image URL");
+            }
+
+            console.log("ImageUploader: Upload successful", {
+                imageUrl: data.url.substring(0, 50) + '...'
+            });
 
             onUploadComplete(data.url);
 
             setFile(null);
             setPreview(null);
         } catch (err) {
-            setError(err.message || "Something went wrong during upload");
-            console.error("Upload error:", err);
+            const errorMessage = err.message || "Something went wrong during upload";
+            console.error("ImageUploader: Upload error", err);
+            setError(errorMessage);
         } finally {
             setUploading(false);
         }
     };
 
-    const clearFile = () => {
-        setFile(null);
-        setPreview(null);
-        setError(null);
-        if (fileInputRef.current) {
-            fileInputRef.current.value = "";
+    const clearFile = (e) => {
+        e.stopPropagation();
+        try {
+            setFile(null);
+            setPreview(null);
+            setError(null);
+
+            if (fileInputRef.current) {
+                fileInputRef.current.value = "";
+            }
+
+            console.log("ImageUploader: File selection cleared");
+        } catch (err) {
+            console.error("ImageUploader: Error clearing file", err);
         }
     };
 
@@ -130,13 +239,14 @@ export default function ImageUploader({ onUploadComplete, maxSizeMB = 5, accepte
                             src={preview}
                             alt="Preview"
                             className="max-h-48 mx-auto rounded-md object-contain"
+                            onError={() => {
+                                console.error("ImageUploader: Error loading preview image");
+                                setError("Failed to display image preview");
+                            }}
                         />
                         <button
                             type="button"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                clearFile();
-                            }}
+                            onClick={clearFile}
                             className="absolute top-1 right-1 bg-gray-800/50 hover:bg-gray-800/70 text-white rounded-full p-1"
                         >
                             <XMarkIcon className="h-4 w-4" />

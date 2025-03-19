@@ -5,7 +5,6 @@ import Link from "next/link";
 import {getCurrentSessionInfo, getCurrentUser} from "@/auth/nextjs/currentUser";
 import NavbarLinks from "@/components/NavbarLinks";
 import LoginButton from "@/components/LoginButton";
-import LogoutButton from "@/components/LogoutButton";
 import Avatar from "@/components/Avatar";
 
 export default async function Navbar() {

@@ -5,8 +5,11 @@ import {getCurrentSessionInfo} from "@/auth/nextjs/currentUser";
 
 export default async function login() {
 
-    if (await getCurrentSessionInfo() !== null) {
-        redirect("/")
+    const session = await getCurrentSessionInfo();
+
+    if (session !== null) {
+        console.log("User already has an active session, redirecting to home page");
+        redirect("/");
     }
 
     return (
