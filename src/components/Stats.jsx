@@ -1,5 +1,3 @@
-"use client"
-
 export default function Stats(){
     return (
         <div className="bg-gradient-to-b from-white dark:from-[#0a0a0a] to-blue-400 dark:to-blue-950 py-24 sm:py-32">

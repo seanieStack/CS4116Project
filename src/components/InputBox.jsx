@@ -1,5 +1,3 @@
-"use client"
-
 export default function InputBox({ type = "text", placeholder, value, onChange, name }) {
     return (
         <div className="max-w-sm space-y-3">
