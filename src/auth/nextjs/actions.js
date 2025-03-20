@@ -5,6 +5,7 @@ import {generateSalt, hashPassword, comparePassword} from "@/auth/core/password"
 import {createUserSession, removeUserSession} from "@/auth/core/session";
 import {redirect} from "next/navigation";
 import {cookies} from "next/headers";
+import logger from "@/util/logger";
 
 /**
  * Creates a new user account and starts an authentication session
@@ -28,17 +29,17 @@ import {cookies} from "next/headers";
  */
 export async function signUp(data) {
     if (!data || !data.email || !data.password || !data.confirmPassword || !data.role) {
-        console.error("Sign up failed: Missing required fields");
+        logger.error("Sign up failed: Missing required fields");
         return "All fields are required";
     }
 
     if (data.password !== data.confirmPassword) {
-        console.warn(`Sign up failed: Password mismatch for ${data.email}`);
+        logger.warn(`Sign up failed: Password mismatch for ${data.email}`);
         return "Passwords do not match";
     }
 
     if (data.role !== "BUYER" && data.role !== "BUSINESS") {
-        console.error(`Sign up failed: Invalid role ${data.role}`);
+        logger.error(`Sign up failed: Invalid role ${data.role}`);
         return "Invalid role. Must be BUYER or BUSINESS";
     }
 
@@ -52,11 +53,11 @@ export async function signUp(data) {
         });
 
         if (existingUser || existingBusiness) {
-            console.warn(`Sign up failed: Account already exists for ${data.email}`);
+            logger.warn(`Sign up failed: Account already exists for ${data.email}`);
             return "Email address is already in use";
         }
     } catch (lookupError) {
-        console.error(`Error checking for existing accounts: ${lookupError.message}`);
+        logger.error(`Error checking for existing accounts: ${lookupError.message}`);
         return "Error checking for existing accounts. Please try again";
     }
 
@@ -65,7 +66,7 @@ export async function signUp(data) {
         salt = generateSalt();
         hashedPassword = await hashPassword(data.password, salt);
     } catch (passwordError) {
-        console.error(`Error hashing password: ${passwordError.message}`);
+        logger.error(`Error hashing password: ${passwordError.message}`);
         return "Error processing password. Please try again";
     }
 
@@ -80,7 +81,7 @@ export async function signUp(data) {
                     salt: salt,
                 }
             });
-            console.log(`New buyer account created: ${data.email}`);
+            logger.log(`New buyer account created: ${data.email}`);
         } else if (data.role === "BUSINESS") {
             user = await prisma.business.create({
                 data: {
@@ -90,22 +91,22 @@ export async function signUp(data) {
                     salt: salt,
                 }
             });
-            console.log(`New business account created: ${data.email}`);
+            logger.log(`New business account created: ${data.email}`);
         }
 
         if (!user) {
             throw new Error("Failed to create account");
         }
     } catch (createError) {
-        console.error(`Error creating account: ${createError.message}`);
+        logger.error(`Error creating account: ${createError.message}`);
         return "Account creation failed. Please try again";
     }
 
     try {
         await createUserSession(user, data.role);
-        console.log(`Session created for new user: ${data.email}`);
+        logger.log(`Session created for new user: ${data.email}`);
     } catch (sessionError) {
-        console.error(`Error creating session: ${sessionError.message}`);
+        logger.error(`Error creating session: ${sessionError.message}`);
         return "Account created but sign-in failed. Please sign in manually";
     }
 
@@ -132,7 +133,7 @@ export async function signUp(data) {
  */
 export async function signIn(data) {
     if (!data || !data.email || !data.password) {
-        console.error("Sign in failed: Missing required fields");
+        logger.error("Sign in failed: Missing required fields");
         return "Email and password are required";
     }
 
@@ -167,30 +168,30 @@ export async function signIn(data) {
         }
 
         if (!user && !business && !admin) {
-            console.warn(`Sign in failed: No account found for ${data.email}`);
+            logger.warn(`Sign in failed: No account found for ${data.email}`);
             return "No account found with this email address";
         }
     } catch (lookupError) {
-        console.error(`Error looking up account: ${lookupError.message}`);
+        logger.error(`Error looking up account: ${lookupError.message}`);
         return "Error retrieving account information. Please try again";
     }
 
     try {
         const account = user || business || admin;
         if (!await comparePassword(account.password, data.password, account.salt)) {
-            console.warn(`Sign in failed: Incorrect password for ${data.email}`);
+            logger.warn(`Sign in failed: Incorrect password for ${data.email}`);
             return "Incorrect password";
         }
     } catch (passwordError) {
-        console.error(`Error verifying password: ${passwordError.message}`);
+        logger.error(`Error verifying password: ${passwordError.message}`);
         return "Error verifying credentials. Please try again";
     }
 
     try {
         await createUserSession(user || business || admin, accountType);
-        console.log(`User signed in successfully: ${data.email} as ${accountType}`);
+        logger.log(`User signed in successfully: ${data.email} as ${accountType}`);
     } catch (sessionError) {
-        console.error(`Error creating session: ${sessionError.message}`);
+        logger.error(`Error creating session: ${sessionError.message}`);
         return "Authentication succeeded but session creation failed. Please try again";
     }
 
@@ -218,9 +219,9 @@ export async function signIn(data) {
 export async function signOut() {
     try {
         await removeUserSession(await cookies());
-        console.log("User signed out successfully");
+        logger.log("User signed out successfully");
     } catch (error) {
-        console.error(`Error during sign out: ${error.message}`);
+        logger.error(`Error during sign out: ${error.message}`);
     }
 
     redirect("/");

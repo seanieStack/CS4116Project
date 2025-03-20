@@ -2,6 +2,7 @@
 
 import {useEffect, useState} from "react";
 import ImageUploader from "@/components/ImageUploader";
+import logger from "@/util/logger";
 
 export default function BusinessProfileCard({user}) {
     const [formData, setFormData] = useState({
@@ -12,12 +13,12 @@ export default function BusinessProfileCard({user}) {
 
     useEffect(() => {
         if (!user) {
-            console.error("BusinessProfileCard: user prop is missing");
+            logger.error("BusinessProfileCard: user prop is missing");
             setError("User information unavailable");
             return;
         }
 
-        console.log("BusinessProfileCard: User data loaded", {
+        logger.log("BusinessProfileCard: User data loaded", {
             userId: user.id,
             hasName: !!user.name,
             hasDescription: !!user.description
@@ -26,13 +27,13 @@ export default function BusinessProfileCard({user}) {
 
     const handleImageUpload = (imageUrl) => {
         try {
-            console.log("BusinessProfileCard: Image uploaded", { imageUrl: imageUrl});
+            logger.log("BusinessProfileCard: Image uploaded", { imageUrl: imageUrl});
             setFormData({
                 ...formData,
                 profileImage: imageUrl
             });
         } catch (err) {
-            console.error("BusinessProfileCard: Error handling image upload", err);
+            logger.error("BusinessProfileCard: Error handling image upload", err);
             setError("Failed to process uploaded image");
         }
     };
@@ -48,14 +49,14 @@ export default function BusinessProfileCard({user}) {
         setSuccess(false);
 
         if (!user || !user.id) {
-            console.error("BusinessProfileCard: Missing user ID for profile update");
+            logger.error("BusinessProfileCard: Missing user ID for profile update");
             setError("Cannot update profile: User ID is missing");
             setLoading(false);
             return;
         }
 
         try {
-            console.log("BusinessProfileCard: Submitting form data", {
+            logger.log("BusinessProfileCard: Submitting form data", {
                 userId: user.id,
                 nameLength: formData.name.length,
                 bioLength: formData.bio.length,
@@ -75,12 +76,12 @@ export default function BusinessProfileCard({user}) {
             }
 
             const data = await response.json().catch(err => {
-                console.error("BusinessProfileCard: Failed to parse response JSON", err);
+                logger.error("BusinessProfileCard: Failed to parse response JSON", err);
                 throw new Error("Failed to parse server response");
             });
 
             if (!response.ok) {
-                console.error("BusinessProfileCard: API error response", {
+                logger.error("BusinessProfileCard: API error response", {
                     status: response.status,
                     statusText: response.statusText,
                     error: data?.message || "Unknown error"
@@ -88,10 +89,10 @@ export default function BusinessProfileCard({user}) {
                 throw new Error(data.message || `Failed to update profile (${response.status})`);
             }
 
-            console.log("BusinessProfileCard: Profile updated successfully", { responseData: data });
+            logger.log("BusinessProfileCard: Profile updated successfully", { responseData: data });
             setSuccess(true);
         } catch (err) {
-            console.error("BusinessProfileCard: Error updating profile", err);
+            logger.error("BusinessProfileCard: Error updating profile", err);
             setError(err.message || "An unexpected error occurred");
         } finally {
             setLoading(false);
@@ -101,18 +102,18 @@ export default function BusinessProfileCard({user}) {
     const validateField = (fieldName, value) => {
         try {
             if (fieldName === "name" && value.length > 50) {
-                console.warn("BusinessProfileCard: Name exceeds recommended length", { length: value.length });
+                logger.warn("BusinessProfileCard: Name exceeds recommended length", { length: value.length });
                 return "Name should be less than 50 characters";
             }
 
             if (fieldName === "bio" && value.length > 500) {
-                console.warn("BusinessProfileCard: Bio exceeds recommended length", { length: value.length });
+                logger.warn("BusinessProfileCard: Bio exceeds recommended length", { length: value.length });
                 return "Bio should be less than 500 characters";
             }
 
             return null;
         } catch (err) {
-            console.error("BusinessProfileCard: Error validating field", { fieldName, error: err });
+            logger.error("BusinessProfileCard: Error validating field", { fieldName, error: err });
             return null;
         }
     };
@@ -128,7 +129,7 @@ export default function BusinessProfileCard({user}) {
 
             setFormData({...formData, [fieldName]: value});
         } catch (err) {
-            console.error("BusinessProfileCard: Error handling field change", { fieldName, error: err });
+            logger.error("BusinessProfileCard: Error handling field change", { fieldName, error: err });
         }
     };
 

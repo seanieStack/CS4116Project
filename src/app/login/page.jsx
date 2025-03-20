@@ -2,13 +2,14 @@ import Navbar from "@/components/Navbar";
 import LoginCard from "@/components/LoginCard";
 import {redirect} from "next/navigation";
 import {getCurrentSessionInfo} from "@/auth/nextjs/currentUser";
+import logger from "@/util/logger";
 
 export default async function login() {
 
     const session = await getCurrentSessionInfo();
 
     if (session !== null) {
-        console.log("User already has an active session, redirecting to home page");
+        logger.log("User already has an active session, redirecting to home page");
         redirect("/");
     }
 

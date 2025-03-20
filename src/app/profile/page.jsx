@@ -3,20 +3,21 @@ import {getCurrentSessionInfo, getCurrentUser} from "@/auth/nextjs/currentUser";
 import BuyerProfileCard from "@/components/BuyerProfileCard";
 import BusinessProfileCard from "@/components/BusinessProfileCard";
 import {redirect} from "next/navigation";
+import logger from "@/util/logger";
 
 export default async function profile() {
 
     const session = await getCurrentSessionInfo();
 
     if (!session) {
-        console.log("No active session found, redirecting to login page");
+        logger.log("No active session found, redirecting to login page");
         redirect("/login");
     }
 
     const user = await getCurrentUser();
 
     if (!user) {
-        console.error(`Session exists (${session.role}) but user data couldn't be retrieved`);
+        logger.error(`Session exists (${session.role}) but user data couldn't be retrieved`);
         return (
             <>
                 <Navbar />
