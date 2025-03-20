@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import logger from "@/util/logger";
 
 /**
  * Hashes a password using crypto.scrypt with the provided salt.
@@ -17,12 +18,12 @@ import crypto from 'crypto';
 export function hashPassword(password, salt) {
 
     if (!password) {
-        console.error('Password hashing failed: No password provided');
+        logger.error('Password hashing failed: No password provided');
         return Promise.reject(new Error('Password is required'));
     }
 
     if (!salt) {
-        console.error('Password hashing failed: No salt provided');
+        logger.error('Password hashing failed: No salt provided');
         return Promise.reject(new Error('Salt is required'));
     }
 
@@ -30,7 +31,7 @@ export function hashPassword(password, salt) {
         try {
             crypto.scrypt(password.normalize(), salt, 64, (error, hash) => {
                 if (error) {
-                    console.error(`Password hashing failed: ${error.message}`);
+                    logger.error(`Password hashing failed: ${error.message}`);
                     reject(error);
                     return;
                 }
@@ -39,12 +40,12 @@ export function hashPassword(password, salt) {
                     const hashedPassword = hash.toString('hex').normalize();
                     resolve(hashedPassword);
                 } catch (stringifyError) {
-                    console.error(`Error converting hash to string: ${stringifyError.message}`);
+                    logger.error(`Error converting hash to string: ${stringifyError.message}`);
                     reject(stringifyError);
                 }
             });
         } catch (cryptoError) {
-            console.error(`Unexpected error during password hashing: ${cryptoError.message}`);
+            logger.error(`Unexpected error during password hashing: ${cryptoError.message}`);
             reject(cryptoError);
         }
     });
@@ -68,7 +69,7 @@ export function generateSalt() {
     try {
         return crypto.randomBytes(16).toString('hex').normalize();
     } catch (error) {
-        console.error(`Salt generation failed: ${error.message}`);
+        logger.error(`Salt generation failed: ${error.message}`);
         return '';
     }
 }
@@ -94,7 +95,7 @@ export function generateSalt() {
  */
 export async function comparePassword(hashedPassword, attemptedPassword, salt) {
     if (!hashedPassword || !attemptedPassword || !salt) {
-        console.error('Password comparison failed: Missing required parameters');
+        logger.error('Password comparison failed: Missing required parameters');
         return false;
     }
 
@@ -106,7 +107,7 @@ export async function comparePassword(hashedPassword, attemptedPassword, salt) {
             Buffer.from(hashedAttemptedPassword, "hex")
         );
     } catch (error) {
-        console.error(`Password comparison failed: ${error.message}`);
+        logger.error(`Password comparison failed: ${error.message}`);
         return false;
     }
 }

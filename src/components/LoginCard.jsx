@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import InputBox from "@/components/InputBox";
 import Link from "next/link";
 import { signIn } from "@/auth/nextjs/actions";
+import logger from "@/util/logger";
 
 export default function LoginCard() {
     const [formData, setFormData] = useState({
@@ -15,7 +16,7 @@ export default function LoginCard() {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
-        console.log("LoginCard: Component initialized");
+        logger.log("LoginCard: Component initialized");
     }, []);
 
     const validateForm = () => {
@@ -39,7 +40,7 @@ export default function LoginCard() {
 
             return { isValid: true, errors: null };
         } catch (err) {
-            console.error("LoginCard: Error validating form", err);
+            logger.error("LoginCard: Error validating form", err);
             return { isValid: false, errors: { message: "Error validating form" } };
         }
     };
@@ -57,21 +58,21 @@ export default function LoginCard() {
                 return;
             }
 
-            console.log("LoginCard: Submitting login request", { email: formData.email });
+            logger.log("LoginCard: Submitting login request", { email: formData.email });
 
             const signInError = await signIn(formData).catch(err => {
-                console.error("LoginCard: Sign in action threw an error", err);
+                logger.error("LoginCard: Sign in action threw an error", err);
                 return "Authentication failed. Please try again.";
             });
 
             if (signInError) {
-                console.error("LoginCard: Sign in failed", { error: signInError });
+                logger.error("LoginCard: Sign in failed", { error: signInError });
                 setError(typeof signInError === 'string' ? { message: signInError } : signInError);
             } else {
-                console.log("LoginCard: Sign in succeeded");
+                logger.log("LoginCard: Sign in succeeded");
             }
         } catch (err) {
-            console.error("LoginCard: Unexpected error during sign in", err);
+            logger.error("LoginCard: Unexpected error during sign in", err);
             setError({ message: err.message || "An unexpected error occurred" });
         } finally {
             setIsSubmitting(false);
@@ -81,7 +82,7 @@ export default function LoginCard() {
     const handleChange = (e) => {
         try {
             const { name, value } = e.target;
-            console.log(`LoginCard: Field "${name}" changed`);
+            logger.log(`LoginCard: Field "${name}" changed`);
 
             if (error) {
                 setError(null);
@@ -92,7 +93,7 @@ export default function LoginCard() {
                 [name]: value
             });
         } catch (err) {
-            console.error("LoginCard: Error in handleChange", err);
+            logger.error("LoginCard: Error in handleChange", err);
         }
     };
 

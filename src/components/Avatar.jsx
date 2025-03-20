@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { signOut } from "@/auth/nextjs/actions";
 
 import Link from "next/link";
+import logger from "@/util/logger";
 
 export default function Avatar({session, user}) {
     const [isOpen, setIsOpen] = useState(false);
@@ -13,29 +14,29 @@ export default function Avatar({session, user}) {
     let url;
 
     if (!session) {
-        console.error("Avatar component: session prop is missing");
+        logger.error("Avatar component: session prop is missing");
         setError("Session information unavailable");
     }
 
     if (!user) {
-        console.error("Avatar component: user prop is missing");
+        logger.error("Avatar component: user prop is missing");
         setError("User information unavailable");
     }
 
     try {
         if (session?.role === "BUSINESS") {
             url = user?.logo || "";
-            console.log("Avatar component: Loaded business profile", { hasLogo: !!user?.logo });
+            logger.log("Avatar component: Loaded business profile", { hasLogo: !!user?.logo });
         }
         else if (session?.role === "BUYER") {
             url = user?.profile_img || "";
-            console.log("Avatar component: Loaded buyer profile", { hasProfileImg: !!user?.profile_img });
+            logger.log("Avatar component: Loaded buyer profile", { hasProfileImg: !!user?.profile_img });
         } else {
-            console.warn(`Avatar component: Unknown role type: ${session?.role}`);
+            logger.warn(`Avatar component: Unknown role type: ${session?.role}`);
             url = "";
         }
     } catch (err) {
-        console.error("Avatar component: Error determining avatar URL", err);
+        logger.error("Avatar component: Error determining avatar URL", err);
         url = "";
         setError("Error loading profile image");
     }
@@ -53,26 +54,26 @@ export default function Avatar({session, user}) {
                 document.removeEventListener("mousedown", handleClickOutside);
             };
         } catch (err) {
-            console.error("Avatar component: Error in click outside handler", err);
+            logger.error("Avatar component: Error in click outside handler", err);
         }
     }, []);
 
     const handleAvatarClick = () => {
         try {
             setIsOpen(!isOpen);
-            console.log("Avatar component: Dropdown toggled", { isNowOpen: !isOpen });
+            logger.log("Avatar component: Dropdown toggled", { isNowOpen: !isOpen });
         } catch (err) {
-            console.error("Avatar component: Error toggling dropdown", err);
+            logger.error("Avatar component: Error toggling dropdown", err);
             setError("Error opening menu");
         }
     };
 
     const handleSignOut = async () => {
         try {
-            console.log("Avatar component: Initiating sign out");
+            logger.log("Avatar component: Initiating sign out");
             await signOut();
         } catch (err) {
-            console.error("Avatar component: Error during sign out", err);
+            logger.error("Avatar component: Error during sign out", err);
             setError("Sign out failed. Please try again.");
         }
     };
@@ -93,7 +94,7 @@ export default function Avatar({session, user}) {
                     className="inline-block w-8 h-8 rounded-full object-cover cursor-pointer"
                     style={{ maxWidth: '32px', maxHeight: '32px' }}
                     onError={(_) => {
-                        console.error("Avatar component: Failed to load image", { url });
+                        logger.error("Avatar component: Failed to load image", { url });
                         setError("Failed to load profile image");
                     }}
                 />

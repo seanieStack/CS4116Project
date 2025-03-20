@@ -1,20 +1,21 @@
 import {NextResponse} from "next/server";
+import logger from "@/util/logger";
 
 export async function POST(request) {
-    console.log("Received business profile update request");
+    logger.log("Received business profile update request");
 
     try {
         const { id, name, bio, profileImage } = await request.json();
 
         if (!id) {
-            console.warn("Business update rejected: Missing business ID");
+            logger.warn("Business update rejected: Missing business ID");
             return NextResponse.json(
                 { message: "Business ID is required" },
                 { status: 400 }
             );
         }
 
-        console.log(`Processing business update for ID: ${id}, name: ${name}, bio: ${bio ? "Provided" : "Not provided"}, logo: ${profileImage ? "Provided" : "Not provided"}`);
+        logger.log(`Processing business update for ID: ${id}, name: ${name}, bio: ${bio ? "Provided" : "Not provided"}, logo: ${profileImage ? "Provided" : "Not provided"}`);
 
         const updateData = {};
         if (name !== undefined) updateData.name = name;
@@ -22,7 +23,7 @@ export async function POST(request) {
         if (profileImage !== undefined) updateData.logo = profileImage;
 
         if (Object.keys(updateData).length === 0) {
-            console.warn(`Business update rejected: No fields to update for business ${id}`);
+            logger.warn(`Business update rejected: No fields to update for business ${id}`);
             return NextResponse.json(
                 { message: "No update data provided" },
                 { status: 400 }
@@ -34,7 +35,7 @@ export async function POST(request) {
         });
 
         if (!existingBusiness) {
-            console.warn(`Business update failed: Business with ID ${id} not found`);
+            logger.warn(`Business update failed: Business with ID ${id} not found`);
             return NextResponse.json(
                 { message: "Business not found" },
                 { status: 404 }
@@ -55,7 +56,7 @@ export async function POST(request) {
             }
         });
 
-        console.log(`Business ${id} updated successfully`);
+        logger.log(`Business ${id} updated successfully`);
 
         return NextResponse.json({
             message: "Business profile updated successfully",
@@ -63,14 +64,14 @@ export async function POST(request) {
         });
     } catch (error) {
         if (error.code === 'P2025') {
-            console.error(`Business update failed: Business not found`, error);
+            logger.error(`Business update failed: Business not found`, error);
             return NextResponse.json(
                 { message: "Business not found" },
                 { status: 404 }
             );
         }
 
-        console.error(`Business update failed with error:`, {
+        logger.error(`Business update failed with error:`, {
             message: error.message,
             code: error.code,
             stack: error.stack

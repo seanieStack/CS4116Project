@@ -1,4 +1,5 @@
 import {S3Client} from "@aws-sdk/client-s3";
+import logger from "@/util/logger";
 
 const requiredEnvVars = [
     'ENV_AWS_REGION',
@@ -9,7 +10,7 @@ const requiredEnvVars = [
 let missingVars = [];
 for (const envVar of requiredEnvVars) {
     if (!process.env[envVar]){
-        console.error(`Missing required environment variable: ${envVar}`);
+        logger.error(`Missing required environment variable: ${envVar}`);
         missingVars.push(envVar);
     }
 }
@@ -28,9 +29,9 @@ try {
         },
     });
 
-    console.log(`S3 client initialized`);
+    logger.log(`S3 client initialized`);
 } catch (error) {
-    console.error(`Failed to initialize S3 client: ${error.message}`);
+    logger.error(`Failed to initialize S3 client: ${error.message}`);
     throw error;
 }
 
