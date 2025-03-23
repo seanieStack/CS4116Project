@@ -41,7 +41,7 @@ model Admin {
   name        String
   email       String  @unique
   password    String  @db.VarChar(255)
-  banned      Boolean @default(false)
+  salt        String  @db.VarChar(255)
   profile_img String?
 
   created_at DateTime @default(now())

@@ -60,7 +60,7 @@ export default function BuyerProfileCard({user}) {
                 hasImage: !!formData.profileImage
             });
 
-            const response = await fetch("/api/updateBuyerProfile", {
+            const response = await fetch("/api/profile/updateBuyerProfile", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

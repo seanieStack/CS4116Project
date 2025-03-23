@@ -4,6 +4,7 @@ import BuyerProfileCard from "@/components/BuyerProfileCard";
 import BusinessProfileCard from "@/components/BusinessProfileCard";
 import {redirect} from "next/navigation";
 import logger from "@/util/logger";
+import AdminProfileCard from "@/components/AdminProfileCard";
 
 export default async function profile() {
 
@@ -42,8 +43,10 @@ export default async function profile() {
                 <div className="w-min h-min overflow-hidden">
                     {session.role === "BUSINESS" ? (
                         <BusinessProfileCard user={user}/>
-                    ): (
+                    ): session.role === "BUYER" ? (
                         <BuyerProfileCard user={user} />
+                    ): (
+                        <AdminProfileCard user={user} />
                     )}
                 </div>
             </div>
