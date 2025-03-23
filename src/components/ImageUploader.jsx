@@ -138,7 +138,7 @@ export default function ImageUploader({ onUploadComplete, maxSizeMB = 5, accepte
             const formData = new FormData();
             formData.append("file", file);
 
-            const response = await fetch("/api/upload", {
+            const response = await fetch("/api/image/upload", {
                 method: "POST",
                 body: formData,
             });

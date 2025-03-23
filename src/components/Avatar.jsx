@@ -31,7 +31,12 @@ export default function Avatar({session, user}) {
         else if (session?.role === "BUYER") {
             url = user?.profile_img || "";
             logger.log("Avatar component: Loaded buyer profile", { hasProfileImg: !!user?.profile_img });
-        } else {
+        }
+        else if (session?.role === "ADMIN") {
+            url = user?.profile_img || "";
+            logger.log("Avatar component: Loaded admin profile", { hasProfileImg: !!user?.profile_img });
+        }
+        else {
             logger.warn(`Avatar component: Unknown role type: ${session?.role}`);
             url = "";
         }

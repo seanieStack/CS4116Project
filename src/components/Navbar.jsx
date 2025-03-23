@@ -36,11 +36,6 @@ export default async function Navbar() {
                      className="hs-collapse hidden overflow-hidden transition-[height,opacity] duration-300 basis-full bg-white dark:bg-neutral-800 grow-1 lg:grow-0 lg:basis-auto lg:block lg:order-2 z-50 w-max"
                      aria-labelledby="hs-navbar-alignment-collapse">
                     <NavbarLinks user={sessionInfo}>{!sessionInfo ?  (<LoginButton hidden={true}/>) : null}</NavbarLinks>
-                        {sessionInfo && user?.role === 'business' && (
-                            <Link href="/Admin-Panel">
-                                <button className="ml-2 text-black dark:text-white">Admin Panel</button>
-                            </Link>
-                        )}
                 </div>
             </nav>
         </header>
