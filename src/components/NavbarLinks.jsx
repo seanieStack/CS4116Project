@@ -19,7 +19,7 @@ export default function NavbarLinks({ user, children }) {
     }
 
     if (user?.role === "ADMIN") {
-        filteredNavLinks.push({ name: "Admin Panel", href: "/admin-panel" });
+        filteredNavLinks.push({ name: "Admin Panel", href: "/admin" });
     }
 
     return (
