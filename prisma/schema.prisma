@@ -136,7 +136,6 @@ model Service {
   name        String
   description String?
   price       Float    @default(0.0)
-  stock       Int      @default(0)
   image       String?
   created_at  DateTime @default(now())
 

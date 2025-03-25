@@ -45,7 +45,7 @@ export default async function Services() {
                 <div key={service.id} className="border p-4 rounded-lg shadow-lg bg-gray-800 text-white">
                   <div className="h-32 flex items-center justify-center mb-4">
                     <img
-                      src={service.business?.logo || ""}
+                      src={service.image || ""}
                       alt={service.name}
                       className="h-full w-auto object-contain"
                     />
