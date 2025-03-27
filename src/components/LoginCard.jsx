@@ -72,7 +72,6 @@ export default function LoginCard() {
                 <button
                     type="submit"
                     className="w-full bg-blue-500 text-white py-3 rounded-md mt-4 hover:bg-blue-600 disabled:opacity-50 disabled:pointer-events-none"
-                    disabled={isSubmitting}
                 >
                     Login
                 </button>
