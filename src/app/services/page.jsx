@@ -1,16 +1,9 @@
-import { PrismaClient } from "@prisma/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-
-const prisma = new PrismaClient();
+import {getAllServices} from "@/db/services";
 
 export default async function Services() {
-  const services = await prisma.service.findMany({
-    include: {
-      business: true,
-    },
-  });
-
+  const services = await getAllServices();
   return (
     <>
       <Navbar />

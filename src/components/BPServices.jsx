@@ -1,79 +1,107 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import ImageUploader from "@/components/ImageUploader";
 
-export default function BPServices() {
-    const [services, setServices] = useState([
-        {
-            id: "1",
-            name: "Database Migration",
-            description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed posuere ante in vehicula convallis. Morbi.",
-            price: 45.0,
-            stock: 10,
-            image: "https://picsum.photos/200/300",
-        },
-        {
-            id: "2",
-            name: "Cloud Optimisation",
-            description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed posuere ante in vehicula convallis. Morbi.",
-            price: 25.0,
-            stock: 8,
-            image: "https://picsum.photos/200/300",
-        },
-        {
-            id: "3",
-            name: "Security enhancement",
-            description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed posuere ante in vehicula convallis. Morbi.",
-            price: 70.0,
-            stock: 4,
-            image: "https://picsum.photos/200/300",
-        },
-    ]);
-
+export default function BPServices({ user }) {
+    const [services, setServices] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
     const [editingServiceId, setEditingServiceId] = useState(null);
     const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+
     const [formData, setFormData] = useState({
         name: "",
         description: "",
         price: "",
-        stock: "",
         image: "",
+        businessId: "",
     });
 
+    useEffect(() => {
+        if (user?.id) {
+            setFormData((prev) => ({
+                ...prev,
+                businessId: user.id,
+            }));
+        }
+    }, [user]);
+
+    useEffect(() => {
+        async function loadServices() {
+            try {
+                const res = await fetch("/api/services");
+                const data = await res.json();
+                setServices(data);
+            } catch (err) {
+                console.error("Failed to load services", err);
+            } finally {
+                setLoading(false);
+            }
+        }
+        void loadServices();
+    }, []);
+
     const handleChange = (e) => {
+        const { name, value, type } = e.target;
         setFormData((prev) => ({
             ...prev,
-            [e.target.name]: e.target.value,
+            [name]: type === "number" ? Number(value) : value,
         }));
     };
 
-    const handleSubmit = (e) => {
+    const handleImageUpload = (imageUrl) => {
+        setFormData((prev) => ({
+            ...prev,
+            image: imageUrl
+        }));
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
-        const updatedService = {
-            id: editingServiceId || Date.now().toString(),
-            name: formData.name,
-            description: formData.description,
-            price: parseFloat(formData.price),
-            stock: parseInt(formData.stock),
-            image: formData.image || "https://via.placeholder.com/150",
-        };
+        if (!formData.name || !formData.businessId) return;
 
-        if (editingServiceId) {
-            setServices((prev) =>
-                prev.map((service) =>
-                    service.id === editingServiceId ? updatedService : service
-                )
-            );
-        } else {
-            setServices((prev) => [...prev, updatedService]);
+        try {
+            const url = editingServiceId
+                ? `/api/services/${editingServiceId}`
+                : `/api/services`;
+
+            const method = editingServiceId ? "PUT" : "POST";
+
+            const response = await fetch(url, {
+                method,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(formData),
+            });
+
+            const updatedService = await response.json();
+
+            if (!updatedService.id) {
+                console.error("Invalid response:", updatedService);
+                return;
+            }
+
+            if (editingServiceId) {
+                setServices((prev) =>
+                    prev.map((s) => (s.id === editingServiceId ? updatedService : s))
+                );
+            } else {
+                setServices((prev) => [updatedService, ...prev]);
+            }
+
+            setFormData({
+                name: "",
+                description: "",
+                price: "",
+                image: "",
+                businessId: user.id,
+            });
+            setEditingServiceId(null);
+            setShowForm(false);
+        } catch (err) {
+            console.error("Failed to submit service", err);
         }
-
-        // Reset
-        setFormData({ name: "", description: "", price: "", stock: "", image: "" });
-        setEditingServiceId(null);
-        setShowForm(false);
     };
 
     const handleEdit = (service) => {
@@ -81,22 +109,37 @@ export default function BPServices() {
             name: service.name,
             description: service.description,
             price: service.price,
-            stock: service.stock,
             image: service.image,
+            businessId: service.businessId,
         });
         setEditingServiceId(service.id);
         setShowForm(true);
     };
 
-    const handleDelete = (id) => {
-        setServices((prev) => prev.filter((service) => service.id !== id));
-        setConfirmDeleteId(null);
+    const handleDelete = async (id) => {
+        try {
+            const res = await fetch(`/api/services/${id}`, {
+                method: "DELETE",
+            });
+
+            const data = await res.json();
+
+            if (!data.success) {
+                console.error("Delete failed:", data.error);
+                return;
+            }
+
+            setServices((prev) => prev.filter((service) => service.id !== id));
+            setConfirmDeleteId(null);
+        } catch (err) {
+            console.error("Error deleting service:", err);
+        }
     };
 
     const closeForm = () => {
         setShowForm(false);
         setEditingServiceId(null);
-        setFormData({ name: "", description: "", price: "", stock: "", image: "" });
+        setFormData({ name: "", description: "", price: "", image: "", businessId: user.id });
     };
 
     const serviceToDelete = services.find((s) => s.id === confirmDeleteId);
@@ -113,47 +156,46 @@ export default function BPServices() {
                         <div className="text-sm mt-1">Add New Service</div>
                     </div>
 
-                    {services.map((service) => (
-                        <div
-                            key={service.id}
-                            className="bg-white dark:bg-neutral-800 rounded-2xl shadow-xl border border-gray-200 dark:border-neutral-700 p-4 transition"
-                        >
-                            <img
-                                src={service.image}
-                                alt={service.name}
-                                className="w-full h-40 object-cover rounded-xl mb-4"
-                            />
-                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                                {service.name}
-                            </h2>
-                            <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
-                                {service.description}
-                            </p>
-                            <div className="flex items-center justify-between mt-4">
-                                <span className="text-blue-600 dark:text-blue-400 font-bold">
-                                  ${service.price.toFixed(2)}
-                                </span>
-                                <span className="text-xs text-gray-500 dark:text-gray-400">
-                                  Stock: {service.stock}
-                                </span>
-                            </div>
+                    {loading ? (
+                        <p className="text-gray-600 dark:text-gray-400">Loading services...</p>
+                    ) : (
+                        services.map((service) => (
+                            <div
+                                key={service.id}
+                                className="bg-white dark:bg-neutral-800 rounded-2xl shadow-xl border border-gray-200 dark:border-neutral-700 p-4 transition"
+                            >
+                                <img
+                                    src={service.image}
+                                    alt={service.name}
+                                    className="w-full h-40 object-cover rounded-xl mb-4"
+                                />
+                                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                    {service.name}
+                                </h2>
+                                <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
+                                    {service.description}
+                                </p>
+                                <div className="mt-4 text-blue-600 dark:text-blue-400 font-bold">
+                                    ${Number(service.price).toFixed(2)}
+                                </div>
 
-                            <div className="flex justify-between items-center mt-4">
-                                <button
-                                    onClick={() => handleEdit(service)}
-                                    className="text-sm text-blue-600 hover:underline dark:text-blue-400"
-                                >
-                                    Edit
-                                </button>
-                                <button
-                                    onClick={() => setConfirmDeleteId(service.id)}
-                                    className="text-sm text-red-600 hover:underline dark:text-red-400"
-                                >
-                                    Delete
-                                </button>
+                                <div className="flex justify-between items-center mt-4">
+                                    <button
+                                        onClick={() => handleEdit(service)}
+                                        className="text-sm text-blue-600 hover:underline dark:text-blue-400"
+                                    >
+                                        Edit
+                                    </button>
+                                    <button
+                                        onClick={() => setConfirmDeleteId(service.id)}
+                                        className="text-sm text-red-600 hover:underline dark:text-red-400"
+                                    >
+                                        Delete
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        ))
+                    )}
                 </div>
 
                 {showForm && (
@@ -197,23 +239,23 @@ export default function BPServices() {
                                     className="w-full px-4 py-2 rounded border bg-white dark:bg-neutral-800 dark:border-neutral-700 text-gray-800 dark:text-white"
                                     required
                                 />
-                                <input
-                                    type="number"
-                                    name="stock"
-                                    placeholder="Stock"
-                                    value={formData.stock}
-                                    onChange={handleChange}
-                                    className="w-full px-4 py-2 rounded border bg-white dark:bg-neutral-800 dark:border-neutral-700 text-gray-800 dark:text-white"
-                                    required
-                                />
-                                <input
-                                    type="text"
-                                    name="image"
-                                    placeholder="Image URL"
-                                    value={formData.image}
-                                    onChange={handleChange}
-                                    className="w-full px-4 py-2 rounded border bg-white dark:bg-neutral-800 dark:border-neutral-700 text-gray-800 dark:text-white"
-                                />
+
+                                <div className="mb-4">
+                                    <label className="block text-sm mb-1 text-gray-800 dark:text-white">
+                                        Upload Image
+                                    </label>
+                                    <ImageUploader
+                                        onUploadComplete={handleImageUpload}
+                                        maxSizeMB={2}
+                                        acceptedFileTypes="image/jpeg, image/png"
+                                    />
+                                    {formData.image && (
+                                        <p className="text-green-600 dark:text-green-400 text-sm mt-2">
+                                            Image uploaded successfully!
+                                        </p>
+                                    )}
+                                </div>
+
                                 <div className="flex justify-end">
                                     <button
                                         type="submit"
@@ -235,8 +277,7 @@ export default function BPServices() {
                             </h3>
                             <p className="text-sm text-gray-700 dark:text-gray-300 mb-6">
                                 Are you sure you want to delete{" "}
-                                <strong>{serviceToDelete?.name}</strong>? This action cannot be
-                                undone.
+                                <strong>{serviceToDelete?.name}</strong>? This action cannot be undone.
                             </p>
                             <div className="flex justify-end gap-3">
                                 <button

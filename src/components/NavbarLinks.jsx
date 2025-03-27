@@ -15,7 +15,7 @@ export default function NavbarLinks({ user, children }) {
     const filteredNavLinks = [...navLinks];
 
     if (user?.role === "BUSINESS") {
-        filteredNavLinks.push({ name: "Business Panel", href: "/business-panel" });
+        filteredNavLinks.push({ name: "Business Panel", href: "/businesspanel" });
     }
 
     if (user?.role === "ADMIN") {

@@ -1,19 +1,21 @@
 import Navbar from "@/components/Navbar";
 import BPNav from "@/components/BPNav";
 import BPMessages from "@/components/BPMessages";
-import {getCurrentUser} from "@/auth/nextjs/currentUser";
+import {getCurrentSessionInfo} from "@/auth/nextjs/currentUser";
 import {redirect} from "next/navigation";
+import Footer from "@/components/Footer";
 
 export default async function messages() {
-    const user = await getCurrentUser();
-    /*if (user === null || user.role !== "BUSINESS") {
+    const session = await getCurrentSessionInfo();
+    if (session?.role !== "BUSINESS") {
         redirect("/")
-    } */
+    }
     return (
         <>
             <Navbar/>
             <BPNav/>
             <BPMessages/>
+            <Footer/>
         </>
     )
 }
