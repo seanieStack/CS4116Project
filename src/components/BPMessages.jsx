@@ -113,7 +113,7 @@ export default function BPMessages() {
     };
 
     return (
-        <div className="flex flex-col w-full min-h-[calc(100vh-4em)] bg-gradient-to-b from-white to-blue-200 dark:from-blue-950 dark:to-background p-6">
+        <div className="flex flex-col w-full min-h-[calc(100vh-4em)] bg-gradient-to-b from-white to-blue-200 dark:from-blue-950 dark:to-background py-6 px-2 sm:px-6 md:px-10">
             <h1 className="text-2xl font-semibold text-gray-800 dark:text-white mb-4">
                 Messages
             </h1>
