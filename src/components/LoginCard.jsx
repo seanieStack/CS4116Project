@@ -13,71 +13,18 @@ export default function LoginCard() {
     });
 
     const [error, setError] = useState(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         logger.log("LoginCard: Component initialized");
     }, []);
 
-    const validateForm = () => {
-        try {
-            let validationErrors = null;
-
-            if (!formData.email) {
-                validationErrors = { message: "Email is required" };
-                return { isValid: false, errors: validationErrors };
-            }
-
-            if (!/\S+@\S+\.\S+/.test(formData.email)) {
-                validationErrors = { message: "Email is invalid" };
-                return { isValid: false, errors: validationErrors };
-            }
-
-            if (!formData.password) {
-                validationErrors = { message: "Password is required" };
-                return { isValid: false, errors: validationErrors };
-            }
-
-            return { isValid: true, errors: null };
-        } catch (err) {
-            logger.error("LoginCard: Error validating form", err);
-            return { isValid: false, errors: { message: "Error validating form" } };
-        }
-    };
-
     const handleSubmit = async (e) => {
-        try {
-            e.preventDefault();
-            setIsSubmitting(true);
-            setError(null);
-
-            const { isValid, errors } = validateForm();
-            if (!isValid) {
-                setError(errors);
-                setIsSubmitting(false);
-                return;
-            }
-
-            logger.log("LoginCard: Submitting login request", { email: formData.email });
-
-            const signInError = await signIn(formData).catch(err => {
-                logger.error("LoginCard: Sign in action threw an error", err);
-                return "Authentication failed. Please try again.";
-            });
-
-            if (signInError) {
-                logger.error("LoginCard: Sign in failed", { error: signInError });
-                setError(typeof signInError === 'string' ? { message: signInError } : signInError);
-            } else {
-                logger.log("LoginCard: Sign in succeeded");
-            }
-        } catch (err) {
-            logger.error("LoginCard: Unexpected error during sign in", err);
-            setError({ message: err.message || "An unexpected error occurred" });
-        } finally {
-            setIsSubmitting(false);
+        e.preventDefault();
+        const error = await signIn(formData)
+        if (error) {
+            setError(error);
         }
-    };
+    }
 
     const handleChange = (e) => {
         try {
@@ -127,7 +74,7 @@ export default function LoginCard() {
                     className="w-full bg-blue-500 text-white py-3 rounded-md mt-4 hover:bg-blue-600 disabled:opacity-50 disabled:pointer-events-none"
                     disabled={isSubmitting}
                 >
-                    {isSubmitting ? "Logging in..." : "Login"}
+                    Login
                 </button>
             </form>
 
