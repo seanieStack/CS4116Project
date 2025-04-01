@@ -19,12 +19,19 @@ export default function ServiceCard({ service }) {
                         <p className="text-gray-400 text-sm">
                             {service.business?.name || "Unknown Business"}
                         </p>
-                        {service.rating && (
-                            <div className="flex items-center mt-1 justify-end">
-                                <span className="text-yellow-400 mr-1">★</span>
-                                <span>{service.rating.toFixed(1)}</span>
-                            </div>
-                        )}
+
+                        <div className="flex items-center mt-1 justify-end">
+                            {service.rating && (
+                                [1, 2, 3, 4, 5].map((star) => (
+                                    <span
+                                        key={star}
+                                        className="text-2xl cursor-pointer"
+                                    >
+                                        {service.rating >= star ? '★' : '☆'}
+                                    </span>
+                                ))
+                            )}
+                        </div>
                     </div>
                 </div>
             </Link>
