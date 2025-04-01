@@ -1,10 +1,9 @@
 "use client"
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import {redirect} from "next/navigation";
 
 export default function ServiceViewer({ service }) {
-    const router = useRouter();
     const [review, setReview] = useState("");
     const [rating, setRating] = useState(0);
     const [message, setMessage] = useState("");
@@ -46,7 +45,6 @@ export default function ServiceViewer({ service }) {
             <div className="container mx-auto p-6 mt-4">
                 <div className="border rounded-lg shadow-lg bg-gray-800 text-white">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
-                        {/* Left column with image */}
                         <div className="md:col-span-1">
                             <div className="w-full bg-blue-600 flex items-center justify-center aspect-square rounded-lg">
                                 <img
@@ -57,7 +55,6 @@ export default function ServiceViewer({ service }) {
                             </div>
                         </div>
 
-                        {/* Middle and right columns for content */}
                         <div className="md:col-span-2">
                             <div className="flex items-center mb-2">
                                 <h2 className="font-bold text-xl">{service?.name}</h2>
@@ -70,13 +67,12 @@ export default function ServiceViewer({ service }) {
 
                             <button
                                 className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded mb-8"
-                                onClick={() => router.push("/purchase")}
+                                onClick={() => redirect(`/purchase/${service?.id}`)}
                             >
                                 Purchase Now - ${service?.price}
                             </button>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                {/* Contact Form */}
                                 <div>
                                     <h4 className="font-semibold text-lg mb-3">Contact the Business</h4>
                                     <form onSubmit={handleContactSubmit}>

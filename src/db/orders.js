@@ -1,4 +1,5 @@
 import {getCurrentSessionInfo, getCurrentUser} from "@/auth/nextjs/currentUser";
+import {prisma} from "@/lib/prisma";
 
 export async function getTotalOrdersForBusiness() {
     const session = await getCurrentSessionInfo();
