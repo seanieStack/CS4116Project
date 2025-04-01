@@ -3,7 +3,6 @@ import Footer from "@/components/Footer";
 import ReviewsList from "@/components/ReviewsList";
 import MessagesList from "@/components/MessagesList";
 import ServicesList from "@/components/ServicesList";
-import ServicesEdit from "@/components/ServicesEdit";
 
 export default function AdminPanel() {
   return (
@@ -30,8 +29,6 @@ export default function AdminPanel() {
             <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
               <h2 className="text-2xl font-semibold mb-4">Services</h2>
               <ServicesList />
-              <h2 className="text-2xl font-semibold mt-6 mb-4">Edit Service</h2>
-              <ServicesEdit />
             </div>
           </div>
         </div>

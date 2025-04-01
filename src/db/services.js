@@ -8,6 +8,14 @@ export async function getAllServices() {
     });
 }
 
+export async function getServiceById(id) {
+    return await prisma.service.findUnique({
+        where: {
+            id: id,
+        },
+    });
+}
+
 export async function getBusinessServices() {
     const session = await getCurrentSessionInfo();
     const user = await getCurrentUser();
