@@ -1,19 +1,6 @@
-import { useEffect, useState } from 'react';
-
-export default function ServicesList() {
-    const [services, setServices] = useState([]);
-
-    useEffect(() => {
-        async function fetchServices() {
-            const response = await fetch('/api/services');
-            const data = await response.json();
-            setServices(data.services);
-        }
-        fetchServices();
-    }, []);
-
+export default function ServicesList({services}) {
     return (
-        <table className="min-w-full bg-white">
+        <table className="min-w-full bg-white text-black">
             <thead>
             <tr>
                 <th className="py-2">Service ID</th>
@@ -23,7 +10,7 @@ export default function ServicesList() {
             </thead>
             <tbody>
             {services.map((service) => (
-                <tr key={service.id}>
+                <tr key={service.id} className="py-2 border border-gray-200">
                     <td className="py-2">{service.id}</td>
                     <td className="py-2">{service.name}</td>
                     <td className="py-2">{service.description}</td>

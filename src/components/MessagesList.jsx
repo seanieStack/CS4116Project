@@ -1,19 +1,6 @@
-import { useEffect, useState } from 'react';
-
-export default function MessagesList() {
-    const [messages, setMessages] = useState([]);
-
-    useEffect(() => {
-        async function fetchMessages() {
-            const response = await fetch('/api/messages');
-            const data = await response.json();
-            setMessages(data.messages);
-        }
-        fetchMessages();
-    }, []);
-
+export default function MessagesList({messages}) {
     return (
-        <table className="min-w-full bg-white">
+        <table className="min-w-full bg-white text-black">
             <thead>
             <tr>
                 <th className="py-2">Sender</th>
@@ -23,7 +10,7 @@ export default function MessagesList() {
             </thead>
             <tbody>
             {messages.map((message) => (
-                <tr key={message.id}>
+                <tr key={message.id} className="py-2 border border-gray-200">
                     <td className="py-2">{message.sender}</td>
                     <td className="py-2">{message.message}</td>
                     <td className="py-2">{new Date(message.date).toLocaleDateString()}</td>

@@ -110,10 +110,12 @@ model Review {
   // Foreign keys
   customerId String
   businessId String
+  serviceId  String
 
   // Relations
   customer Buyer    @relation(fields: [customerId], references: [id])
   business Business @relation(fields: [businessId], references: [id])
+  service  Service  @relation(fields: [serviceId], references: [id])
 }
 
 model Order {
@@ -142,9 +144,10 @@ model Service {
   // Foreign key
   businessId String
 
-  // Relation
+  // Relations
   business Business @relation(fields: [businessId], references: [id])
   Order    Order[]
+  Review   Review[]
 }
 
 enum Role {

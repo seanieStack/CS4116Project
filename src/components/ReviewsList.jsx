@@ -1,19 +1,6 @@
-import { useEffect, useState } from 'react';
-
-export default function ReviewsList() {
-    const [reviews, setReviews] = useState([]);
-
-    useEffect(() => {
-        async function fetchReviews() {
-            const response = await fetch('/api/reviews');
-            const data = await response.json();
-            setReviews(data.reviews);
-        }
-        fetchReviews();
-    }, []);
-
+export default function ReviewsList({reviews}) {
     return (
-        <table className="min-w-full bg-white">
+        <table className="min-w-full bg-white text-black">
             <thead>
             <tr>
                 <th className="py-2">Business ID</th>
@@ -23,9 +10,9 @@ export default function ReviewsList() {
             </thead>
             <tbody>
             {reviews.map((review) => (
-                <tr key={review.id}>
+                <tr key={review.id} className="py-2 border border-gray-200">
                     <td className="py-2">{review.businessId}</td>
-                    <td className="py-2">{review.review}</td>
+                    <td className="py-2">{review.comment}</td>
                     <td className="py-2">{review.rating}</td>
                 </tr>
             ))}
