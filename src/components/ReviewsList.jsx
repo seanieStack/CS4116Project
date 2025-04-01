@@ -1,34 +1,35 @@
-"use client"
-
 import { useEffect, useState } from 'react';
 
 export default function ReviewsList() {
     const [reviews, setReviews] = useState([]);
 
     useEffect(() => {
-        fetch('/api/reviews')
-            .then(response => response.json())
-            .then(data => setReviews(data));
+        async function fetchReviews() {
+            const response = await fetch('/api/reviews');
+            const data = await response.json();
+            setReviews(data.reviews);
+        }
+        fetchReviews();
     }, []);
 
     return (
-        <div className="bg-white dark:bg-neutral-800">
-            <table>
-                <thead>
-                <tr>
-                    <th className="text-black dark:text-white">ID</th>
-                    <th className="text-black dark:text-white">Review</th>
+        <table className="min-w-full bg-white">
+            <thead>
+            <tr>
+                <th className="py-2">Business ID</th>
+                <th className="py-2">Review</th>
+                <th className="py-2">Rating</th>
+            </tr>
+            </thead>
+            <tbody>
+            {reviews.map((review) => (
+                <tr key={review.id}>
+                    <td className="py-2">{review.businessId}</td>
+                    <td className="py-2">{review.review}</td>
+                    <td className="py-2">{review.rating}</td>
                 </tr>
-                </thead>
-                <tbody>
-                {reviews.map(review => (
-                    <tr key={review.id}>
-                        <td className="text-black dark:text-white">{review.id}</td>
-                        <td className="text-black dark:text-white">{review.content}</td>
-                    </tr>
-                ))}
-                </tbody>
-            </table>
-        </div>
+            ))}
+            </tbody>
+        </table>
     );
 }

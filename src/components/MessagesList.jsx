@@ -1,34 +1,35 @@
-"use client"
-
 import { useEffect, useState } from 'react';
 
 export default function MessagesList() {
     const [messages, setMessages] = useState([]);
 
     useEffect(() => {
-        fetch('/api/messages')
-            .then(response => response.json())
-            .then(data => setMessages(data));
+        async function fetchMessages() {
+            const response = await fetch('/api/messages');
+            const data = await response.json();
+            setMessages(data.messages);
+        }
+        fetchMessages();
     }, []);
 
     return (
-        <div className="bg-white dark:bg-neutral-800">
-            <table>
-                <thead>
-                <tr>
-                    <th className="text-black dark:text-white">ID</th>
-                    <th className="text-black dark:text-white">Message</th>
+        <table className="min-w-full bg-white">
+            <thead>
+            <tr>
+                <th className="py-2">Sender</th>
+                <th className="py-2">Message</th>
+                <th className="py-2">Date</th>
+            </tr>
+            </thead>
+            <tbody>
+            {messages.map((message) => (
+                <tr key={message.id}>
+                    <td className="py-2">{message.sender}</td>
+                    <td className="py-2">{message.message}</td>
+                    <td className="py-2">{new Date(message.date).toLocaleDateString()}</td>
                 </tr>
-                </thead>
-                <tbody>
-                {messages.map(message => (
-                    <tr key={message.id}>
-                        <td className="text-black dark:text-white">{message.id}</td>
-                        <td className="text-black dark:text-white">{message.message}</td>
-                    </tr>
-                ))}
-                </tbody>
-            </table>
-        </div>
+            ))}
+            </tbody>
+        </table>
     );
 }

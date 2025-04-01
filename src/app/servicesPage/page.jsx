@@ -26,9 +26,31 @@ export default function BusinessPage({ business }) {
   const [rating, setRating] = useState(0);
   const [message, setMessage] = useState("");
 
-  const handleReviewSubmit = (e) => {
+  const handleReviewSubmit = async (e) => {
     e.preventDefault();
-    // Handle review submission logic here
+
+    try {
+      const response = await fetch('/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          businessId: business.id,
+          review,
+          rating,
+        }),
+      });
+
+      if (response.ok) {
+        setReview('');
+        setRating(0);
+        alert('Review submitted successfully');
+      } else {
+        alert('Failed to submit review');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('An error occurred while submitting the review');
+    }
   };
 
   const handleContactSubmit = (e) => {
