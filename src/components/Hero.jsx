@@ -23,7 +23,7 @@ export default function Hero(){
                 </div>
                 <div className="relative mx-auto mt-10 max-w-lg">
                     <img className="w-full rounded-2xl border border-gray-100 shadow"
-                         src="https://dummyimage.com/2000x2500/ff00ff/fff.png" alt=""/>
+                         src="homescreenimage.png" alt=""/>
                 </div>
             </div>
         </section>
