@@ -1,5 +1,5 @@
 import {getCurrentSessionInfo, getCurrentUser} from "@/auth/nextjs/currentUser";
-
+import { prisma } from "@/lib/prisma";
 export async function getAverageRatingForBusiness() {
     const session = await getCurrentSessionInfo();
     const user = await getCurrentUser();
