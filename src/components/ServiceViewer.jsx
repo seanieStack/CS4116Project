@@ -136,7 +136,7 @@ export default function ServiceViewer({ service }) {
                                     <h4 className="font-semibold text-lg mb-3">Contact the Business</h4>
                                     <form onSubmit={handleContactSubmit}>
                                         <textarea
-                                            className="w-full p-2 mb-3 border rounded-lg text-white"
+                                            className="w-full p-2 mb-3 border rounded-lg text-black"
                                             placeholder="Your message"
                                             value={message}
                                             onChange={(e) => setMessage(e.target.value)}
