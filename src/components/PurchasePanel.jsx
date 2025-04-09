@@ -45,20 +45,20 @@ export default function PurchasePanel({service, user}) {
                                     </div>
                                     <div className="flex justify-between mb-2">
                                         <span>Price:</span>
-                                        <span className="font-semibold">€{service.price}</span>
+                                        <span className="font-semibold">€{(service.price).toFixed(2)}</span>
                                     </div>
                                     <div className="flex justify-between mb-2">
                                         <span>VAT:</span>
-                                        <span className="font-semibold">€{service.price * 0.21}</span>
+                                        <span className="font-semibold">€{(service.price * 0.21).toFixed(2)}</span>
                                     </div>
                                     <div className="flex justify-between mb-2">
                                         <span>Service fee:</span>
-                                        <span className="font-semibold">€{service.price * 0.1}</span>
+                                        <span className="font-semibold">€{(service.price * 0.1).toFixed(2)}</span>
                                     </div>
                                     <div className="h-px bg-gray-600 my-4"></div>
                                     <div className="flex justify-between font-bold">
                                         <span>Total:</span>
-                                        <span>€{service.price + service.price * 0.21 + service.price * 0.1}</span>
+                                        <span>€{(service.price + service.price * 0.21 + service.price * 0.1).toFixed(2)}</span>
                                     </div>
                                 </div>
                             </div>
