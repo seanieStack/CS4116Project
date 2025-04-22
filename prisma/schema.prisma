@@ -64,8 +64,8 @@ model Buyer {
   // Foreign keys
   orders           Order[]
   reviews          Review[]
-  sentMessages     Message[] @relation("SenderRelation")
-  receivedMessages Message[] @relation("ReceiverRelation")
+
+  Conversation Conversation[]
 }
 
 model Business {
@@ -85,20 +85,45 @@ model Business {
   Service Service[]
   Order   Order[]
   Review  Review[]
+
+  Conversation Conversation[]
+}
+
+enum SenderType {
+  BUYER
+  BUSINESS
+}
+
+model Conversation {
+  id         String   @id @default(cuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // Participants
+  buyerId    String
+  businessId String
+  serviceId  String
+
+  // Relations
+  buyer    Buyer    @relation(fields: [buyerId], references: [id])
+  business Business @relation(fields: [businessId], references: [id])
+  service  Service  @relation(fields: [serviceId], references: [id])
+
+  messages Message[]
 }
 
 model Message {
   id         String   @id @default(cuid())
   content    String
   created_at DateTime @default(now())
+  read       Boolean  @default(false)
 
-  // Foreign keys
+  // Sender information
   senderId   String
-  receiverId String
+  senderType SenderType
 
-  // Relations
-  sender   Buyer @relation("SenderRelation", fields: [senderId], references: [id])
-  receiver Buyer @relation("ReceiverRelation", fields: [receiverId], references: [id])
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
 }
 
 model Review {
@@ -149,6 +174,8 @@ model Service {
   business Business @relation(fields: [businessId], references: [id])
   Order    Order[]
   Review   Review[]
+
+  Conversation Conversation[]
 }
 
 enum Role {

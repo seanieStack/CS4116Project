@@ -1,11 +1,13 @@
 "use client"
 
 import { useState, useEffect } from "react";
-import { redirect } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 import logger from "@/util/logger";
 import ServiceReviews from "@/components/ServiceReviews";
+import { ChatBubbleLeftIcon } from "@heroicons/react/24/outline";
 
 export default function ServiceViewer({ service }) {
+    const router = useRouter();
     const [review, setReview] = useState("");
     const [rating, setRating] = useState(0);
     const [message, setMessage] = useState("");
@@ -14,6 +16,9 @@ export default function ServiceViewer({ service }) {
     const [loading, setLoading] = useState(true);
     const [reviewSubmitted, setReviewSubmitted] = useState(false);
     const [error, setError] = useState("");
+    const [sendingMessage, setSendingMessage] = useState(false);
+    const [messageSuccess, setMessageSuccess] = useState(false);
+    const [conversation, setConversation] = useState(null);
 
     useEffect(() => {
         async function fetchUserAndOrderData() {
@@ -33,6 +38,26 @@ export default function ServiceViewer({ service }) {
                     const reviewData = await reviewCheck.json();
 
                     setReviewSubmitted(reviewData.hasReviewed);
+
+                    if (userData.user.id && service.businessId) {
+                        try {
+                            const conversationResponse = await fetch('/api/conversations', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    serviceId: service.id,
+                                    businessId: service.businessId
+                                })
+                            });
+
+                            if (conversationResponse.ok) {
+                                const conversationData = await conversationResponse.json();
+                                setConversation(conversationData.conversation);
+                            }
+                        } catch (err) {
+                            logger.error("Error checking for existing conversation:", err);
+                        }
+                    }
                 }
             } catch (err) {
                 logger.error("Error fetching user or order data:", err);
@@ -43,7 +68,7 @@ export default function ServiceViewer({ service }) {
         }
 
         fetchUserAndOrderData();
-    }, [service.id]);
+    }, [service.id, service.businessId]);
 
     const handleReviewSubmit = async (e) => {
         e.preventDefault();
@@ -94,9 +119,79 @@ export default function ServiceViewer({ service }) {
         }
     };
 
-    const handleContactSubmit = (e) => {
+    const handleMessageSubmit = async (e) => {
         e.preventDefault();
-        // Handle contact form submission logic here
+
+        if (!user) {
+            setError("You must be logged in to send a message");
+            return;
+        }
+
+        if (!message.trim()) {
+            setError("Please enter a message");
+            return;
+        }
+
+        try {
+            setSendingMessage(true);
+            setError("");
+
+            if (!conversation) {
+                const conversationResponse = await fetch('/api/conversations', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        serviceId: service.id,
+                        businessId: service.businessId
+                    })
+                });
+
+                if (!conversationResponse.ok) {
+                    const errorData = await conversationResponse.json();
+                    throw new Error(errorData.error || "Failed to create conversation");
+                }
+
+                const conversationData = await conversationResponse.json();
+                setConversation(conversationData.conversation);
+
+                await sendMessage(conversationData.conversation.id);
+            } else {
+                await sendMessage(conversation.id);
+            }
+
+            setMessage('');
+            setMessageSuccess(true);
+            setTimeout(() => setMessageSuccess(false), 3000);
+        } catch (err) {
+            logger.error('Error sending message:', err);
+            setError(err.message || "Failed to send your message");
+        } finally {
+            setSendingMessage(false);
+        }
+    };
+
+    const sendMessage = async (conversationId) => {
+        const response = await fetch('/api/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                conversationId: conversationId,
+                content: message
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || "Failed to send message");
+        }
+
+        return await response.json();
+    };
+
+    const openConversation = () => {
+        if (conversation) {
+            router.push(`/messages/${conversation.id}`);
+        }
     };
 
     return (
@@ -118,7 +213,7 @@ export default function ServiceViewer({ service }) {
                             <div className="flex items-center mb-2">
                                 <h2 className="font-bold text-xl">{service?.name}</h2>
                                 <div className="ml-2 bg-green-500 dark:bg-green-600 text-white px-3 py-1 rounded-full text-sm font-bold">
-                                    ${service?.price}
+                                    €{service?.price}
                                 </div>
                             </div>
 
@@ -128,24 +223,60 @@ export default function ServiceViewer({ service }) {
                                 className="bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white px-4 py-2 rounded mb-8"
                                 onClick={() => redirect(`/purchase/${service?.id}`)}
                             >
-                                Purchase Now - ${service?.price}
+                                Purchase Now - €{service?.price}
                             </button>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div>
                                     <h4 className="font-semibold text-lg mb-3">Contact the Business</h4>
-                                    <form onSubmit={handleContactSubmit}>
-                                        <textarea
-                                            className="w-full p-2 mb-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
-                                            placeholder="Your message"
-                                            value={message}
-                                            onChange={(e) => setMessage(e.target.value)}
-                                            rows={6}
-                                        />
-                                        <button type="submit" className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white px-4 py-2 rounded">
-                                            Send Message
-                                        </button>
-                                    </form>
+
+                                    {!user && (
+                                        <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg mb-4 text-center">
+                                            <p>Please sign in to contact the business</p>
+                                        </div>
+                                    )}
+
+                                    {user && conversation && conversation.messages && conversation.messages.length > 0 ? (
+                                        <div>
+                                            <button
+                                                onClick={openConversation}
+                                                className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-lg transition-colors"
+                                            >
+                                                <ChatBubbleLeftIcon className="h-5 w-5" />
+                                                <span>View Conversation</span>
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <form onSubmit={handleMessageSubmit}>
+                                            {error && (
+                                                <div className="bg-red-100 text-red-800 dark:bg-red-600 dark:text-white p-2 mb-3 rounded-lg text-sm">
+                                                    {error}
+                                                </div>
+                                            )}
+
+                                            {messageSuccess && (
+                                                <div className="bg-green-100 text-green-800 dark:bg-green-700 dark:text-white p-2 mb-3 rounded-lg text-sm">
+                                                    Message sent successfully!
+                                                </div>
+                                            )}
+
+                                            <textarea
+                                                className="w-full p-2 mb-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                                                placeholder="Your message to the business"
+                                                value={message}
+                                                onChange={(e) => setMessage(e.target.value)}
+                                                rows={6}
+                                                disabled={!user || sendingMessage}
+                                            />
+                                            <button
+                                                type="submit"
+                                                className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white px-4 py-2 rounded disabled:bg-gray-400 dark:disabled:bg-gray-500 disabled:cursor-not-allowed"
+                                                disabled={!user || sendingMessage}
+                                            >
+                                                {sendingMessage ? "Sending..." : "Send Message"}
+                                            </button>
+                                        </form>
+                                    )}
                                 </div>
 
                                 <div>
@@ -171,7 +302,7 @@ export default function ServiceViewer({ service }) {
 
                                     {user && hasPurchased && !reviewSubmitted && (
                                         <form onSubmit={handleReviewSubmit}>
-                                            {error && (
+                                            {error && error.includes("review") && (
                                                 <div className="bg-red-100 text-red-800 dark:bg-red-600 dark:text-white p-2 mb-3 rounded-lg text-sm">
                                                     {error}
                                                 </div>
