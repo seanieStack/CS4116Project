@@ -7,7 +7,7 @@ export default function AdminNav() {
     const pathname = usePathname();
 
     return (
-        <nav className="w-full bg-gray-100 dark:bg-neutral-900 shadow-sm border-b border-gray-200 dark:border-neutral-700">
+        <nav className="w-full bg-gray-100 dark:bg-neutral-900 shadow-sm border-b border-gray-200 dark:border-neutral-700 h-12">
             <ul className="flex space-x-6 h-12 items-center px-4 sm:px-6 lg:px-8">
                 <li>
                     <Link
