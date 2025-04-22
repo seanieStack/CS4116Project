@@ -37,14 +37,14 @@ export default function ServiceReviews({ serviceId }) {
         return (
             <div className="mt-8 text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
-                <p className="mt-2 text-gray-300">Loading reviews...</p>
+                <p className="mt-2 text-gray-500 dark:text-gray-300">Loading reviews...</p>
             </div>
         );
     }
 
     if (error) {
         return (
-            <div className="mt-8 text-center text-red-500">
+            <div className="mt-8 text-center text-red-600 dark:text-red-500">
                 <p>{error}</p>
             </div>
         );
@@ -53,7 +53,7 @@ export default function ServiceReviews({ serviceId }) {
     if (reviews.length === 0) {
         return (
             <div className="mt-8 text-center">
-                <p className="text-gray-300">No reviews yet</p>
+                <p className="text-gray-500 dark:text-gray-300">No reviews yet</p>
             </div>
         );
     }
@@ -64,7 +64,7 @@ export default function ServiceReviews({ serviceId }) {
 
             <div className="space-y-6">
                 {reviews.map((review) => (
-                    <div key={review.id} className="bg-gray-700 rounded-lg p-4">
+                    <div key={review.id} className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4">
                         <div className="flex items-center mb-2">
                             <div className="flex-shrink-0 mr-3">
                                 {review.customer.profile_img ? (
@@ -86,12 +86,12 @@ export default function ServiceReviews({ serviceId }) {
                                     {[...Array(5)].map((_, i) => (
                                         <span
                                             key={i}
-                                            className={`text-lg ${i < review.rating ? "text-yellow-500" : "text-gray-500"}`}
+                                            className={`text-lg ${i < review.rating ? "text-amber-500 dark:text-yellow-500" : "text-gray-400 dark:text-gray-500"}`}
                                         >
                                             ★
                                         </span>
                                     ))}
-                                    <span className="ml-2 text-sm text-gray-400">
+                                    <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
                                         {new Date(review.created_at).toLocaleDateString()}
                                     </span>
                                 </div>
@@ -99,7 +99,7 @@ export default function ServiceReviews({ serviceId }) {
                         </div>
 
                         {review.comment && (
-                            <p className="text-gray-300 mt-2">{review.comment}</p>
+                            <p className="text-gray-700 dark:text-gray-300 mt-2">{review.comment}</p>
                         )}
                     </div>
                 ))}

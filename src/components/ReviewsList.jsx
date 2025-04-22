@@ -1,33 +1,33 @@
 export default function ReviewsList({ reviews }) {
     return (
         <div className="overflow-x-auto p-4">
-            <div className="bg-gray-700 shadow-lg rounded-lg p-4">
-                <table className="min-w-full divide-y divide-gray-600">
-                    <thead className="bg-gray-600">
-                        <tr>
-                            <th className="text-left px-6 py-3 text-white font-semibold uppercase text-sm tracking-wider">
-                                Business ID
-                            </th>
-                            <th className="text-left px-6 py-3 text-white font-semibold uppercase text-sm tracking-wider">
-                                Review
-                            </th>
-                            <th className="text-left px-6 py-3 text-white font-semibold uppercase text-sm tracking-wider">
-                                Rating
-                            </th>
-                        </tr>
+            <div className="bg-white dark:bg-gray-700 shadow-lg rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
+                    <thead className="bg-gray-100 dark:bg-gray-600">
+                    <tr>
+                        <th className="text-left px-6 py-3 text-gray-700 dark:text-white font-semibold uppercase text-sm tracking-wider">
+                            Business ID
+                        </th>
+                        <th className="text-left px-6 py-3 text-gray-700 dark:text-white font-semibold uppercase text-sm tracking-wider">
+                            Review
+                        </th>
+                        <th className="text-left px-6 py-3 text-gray-700 dark:text-white font-semibold uppercase text-sm tracking-wider">
+                            Rating
+                        </th>
+                    </tr>
                     </thead>
-                    <tbody className="bg-gray-700 divide-y divide-gray-600">
-                        {reviews.map((review) => (
-                            <tr key={review.id}>
-                                <td className="px-6 py-4">{review.businessId}</td>
-                                <td className="px-6 py-4">{review.comment}</td>
-                                <td className="px-6 py-4">
-                                    <span className="inline-block bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded">
+                    <tbody className="bg-white dark:bg-gray-700 divide-y divide-gray-200 dark:divide-gray-600">
+                    {reviews.map((review) => (
+                        <tr key={review.id} className="hover:bg-gray-50 dark:hover:bg-gray-650">
+                            <td className="px-6 py-4 text-gray-800 dark:text-gray-200">{review.businessId}</td>
+                            <td className="px-6 py-4 text-gray-800 dark:text-gray-200">{review.comment}</td>
+                            <td className="px-6 py-4">
+                                    <span className="inline-block bg-blue-500 dark:bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded">
                                         {review.rating} ★
                                     </span>
-                                </td>
-                            </tr>
-                        ))}
+                            </td>
+                        </tr>
+                    ))}
                     </tbody>
                 </table>
             </div>

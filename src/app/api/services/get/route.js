@@ -50,9 +50,9 @@ export async function GET(request) {
                 case 'price_desc':
                     orderBy = { price: 'desc' };
                     break;
-                // case 'rating':
-                //     orderBy = { /* Add your rating field here */ };
-                //     break;
+                case 'rating':
+                    orderBy = { rating: 'desc' };
+                    break;
                 default:
                     orderBy = { created_at: 'desc' };
             }

@@ -146,21 +146,34 @@ export default function ServicesHolder() {
                         placeholder="Search"
                         value={searchTerm}
                         onChange={handleSearch}
-                        className="border p-2 rounded-lg w-full md:w-1/3 bg-gray-700 text-white"
+                        className="border border-gray-300 dark:border-gray-600 p-2 rounded-lg w-full md:w-1/3 bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
                     />
                     <div className="flex flex-wrap gap-2">
                         <button
-                            className={`border px-4 py-2 rounded ${sortBy === 'price_asc' ? 'bg-blue-600' : ''}`}
+                            className={`border border-gray-300 dark:border-gray-600 px-4 py-2 rounded ${
+                                sortBy === 'price_asc'
+                                    ? 'bg-blue-500 text-white dark:bg-blue-600'
+                                    : 'bg-white text-gray-800 hover:bg-gray-100 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600'
+                            }`}
                             onClick={() => handleSort('price_asc')}>
                             Price ↑
                         </button>
                         <button
-                            className={`border px-4 py-2 rounded ${sortBy === 'price_desc' ? 'bg-blue-600' : ''}`}
+                            className={`border border-gray-300 dark:border-gray-600 px-4 py-2 rounded ${
+                                sortBy === 'price_desc'
+                                    ? 'bg-blue-500 text-white dark:bg-blue-600'
+                                    : 'bg-white text-gray-800 hover:bg-gray-100 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600'
+                            }`}
                             onClick={() => handleSort('price_desc')}>
                             Price ↓
                         </button>
-                        <button className={`border px-4 py-2 rounded ${sortBy === 'rating' ? 'bg-blue-600' : ''}`}
-                                onClick={() => handleSort('rating')}>
+                        <button
+                            className={`border border-gray-300 dark:border-gray-600 px-4 py-2 rounded ${
+                                sortBy === 'rating'
+                                    ? 'bg-blue-500 text-white dark:bg-blue-600'
+                                    : 'bg-white text-gray-800 hover:bg-gray-100 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600'
+                            }`}
+                            onClick={() => handleSort('rating')}>
                             Rating
                         </button>
                     </div>

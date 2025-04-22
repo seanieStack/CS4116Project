@@ -1,29 +1,29 @@
 export default function ServicesList({ services }) {
     return (
         <div className="overflow-x-auto p-4">
-            <div className="bg-gray-700 shadow-lg rounded-lg p-4">
-                <table className="min-w-full divide-y divide-gray-600">
-                    <thead className="bg-gray-600">
-                        <tr>
-                            <th className="text-left px-6 py-3 text-white font-semibold uppercase text-sm tracking-wider">
-                                Service ID
-                            </th>
-                            <th className="text-left px-6 py-3 text-white font-semibold uppercase text-sm tracking-wider">
-                                Service Name
-                            </th>
-                            <th className="text-left px-6 py-3 text-white font-semibold uppercase text-sm tracking-wider">
-                                Description
-                            </th>
-                        </tr>
+            <div className="bg-white dark:bg-gray-700 shadow-lg rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
+                    <thead className="bg-gray-100 dark:bg-gray-600">
+                    <tr>
+                        <th className="text-left px-6 py-3 text-gray-700 dark:text-white font-semibold uppercase text-sm tracking-wider">
+                            Service ID
+                        </th>
+                        <th className="text-left px-6 py-3 text-gray-700 dark:text-white font-semibold uppercase text-sm tracking-wider">
+                            Service Name
+                        </th>
+                        <th className="text-left px-6 py-3 text-gray-700 dark:text-white font-semibold uppercase text-sm tracking-wider">
+                            Description
+                        </th>
+                    </tr>
                     </thead>
-                    <tbody className="bg-gray-700 divide-y divide-gray-600">
-                        {services.map((service) => (
-                            <tr key={service.id}>
-                                <td className="px-6 py-4">{service.id}</td>
-                                <td className="px-6 py-4">{service.name}</td>
-                                <td className="px-6 py-4">{service.description}</td>
-                            </tr>
-                        ))}
+                    <tbody className="bg-white dark:bg-gray-700 divide-y divide-gray-200 dark:divide-gray-600">
+                    {services.map((service) => (
+                        <tr key={service.id} className="hover:bg-gray-50 dark:hover:bg-gray-650">
+                            <td className="px-6 py-4 text-gray-800 dark:text-gray-200">{service.id}</td>
+                            <td className="px-6 py-4 text-gray-800 dark:text-gray-200">{service.name}</td>
+                            <td className="px-6 py-4 text-gray-800 dark:text-gray-200">{service.description}</td>
+                        </tr>
+                    ))}
                     </tbody>
                 </table>
             </div>
