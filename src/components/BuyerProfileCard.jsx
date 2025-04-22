@@ -145,7 +145,7 @@ export default function BuyerProfileCard({user}) {
                         value={formData.name}
                         placeholder={user.name}
                         onChange={(e) => handleFieldChange("name", e.target.value)}
-                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-neutral-700 dark:border-neutral-600"
+                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-neutral-700 dark:border-neutral-600 bg-white"
                     />
                 </div>
 

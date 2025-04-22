@@ -22,7 +22,7 @@ export default function Hero(){
                     </div>
                 </div>
                 <div className="relative mx-auto mt-10 max-w-lg">
-                    <img className="w-full rounded-2xl border border-gray-100 shadow"
+                    <img className="invert contrast-150 dark:contrast-100 dark:invert-0 w-full rounded-2xl border border-gray-100 shadow"
                          src="homescreenimage.png" alt=""/>
                 </div>
             </div>
