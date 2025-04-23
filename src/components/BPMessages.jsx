@@ -1,189 +1,315 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
-const mockBusiness = {
-    id: "1",
-    name: "Test Business",
-};
-
-const mockBuyers = [
-    { id: "2", name: "John Doe" },
-    { id: "3", name: "Jane Smith" },
-];
-
-const mockMessages = [
-    {
-        id: "msg-1",
-        content: "This is test 1",
-        created_at: "2024-03-21T10:30:00Z",
-        senderId: "2",
-        receiverId: "1",
-    },
-    {
-        id: "msg-2",
-        content: "Test number 1",
-        created_at: "2024-03-21T10:35:00Z",
-        senderId: "1",
-        receiverId: "2",
-    },
-    {
-        id: "msg-3",
-        content: "This is test 2",
-        created_at: "2024-03-22T09:15:00Z",
-        senderId: "3",
-        receiverId: "1",
-    },
-    {
-        id: "msg-4",
-        content: "Test number 2",
-        created_at: "2024-03-22T09:30:00Z",
-        senderId: "1",
-        receiverId: "3",
-    },
-];
+import { useEffect, useState, useRef } from "react";
+import { useRouter } from "next/navigation";
+import logger from "@/util/logger";
 
 export default function BPMessages() {
-    const [messages, setMessages] = useState([]);
+    const router = useRouter();
+    const [conversations, setConversations] = useState([]);
     const [activeConversation, setActiveConversation] = useState(null);
+    const [activeMessages, setActiveMessages] = useState([]);
     const [reply, setReply] = useState("");
+    const [loading, setLoading] = useState(true);
+    const [sending, setSending] = useState(false);
+    const [error, setError] = useState("");
     const [readConversations, setReadConversations] = useState([]);
 
+    const readConversationsRef = useRef(readConversations);
+
     useEffect(() => {
-        const relevantMessages = mockMessages.filter(
-            (msg) =>
-                msg.senderId === mockBusiness.id || msg.receiverId === mockBusiness.id
-        );
-        setMessages(relevantMessages);
+        readConversationsRef.current = readConversations;
+    }, [readConversations]);
+
+    useEffect(() => {
+        async function fetchConversations() {
+            try {
+                setLoading(true);
+                const response = await fetch('/api/conversations?role=business');
+
+                if (!response.ok) {
+                    throw new Error(`Server responded with ${response.status}`);
+                }
+
+                const data = await response.json();
+                setConversations(data.conversations || []);
+
+                const readIds = new Set(readConversationsRef.current);
+                data.conversations.forEach(conv => {
+                    if (conv.messages && conv.messages.length > 0) {
+                        const latestMessage = conv.messages[0];
+                        if (latestMessage.senderType === 'BUYER' && latestMessage.read) {
+                            readIds.add(conv.id);
+                        }
+                    }
+                });
+
+                setReadConversations(Array.from(readIds));
+            } catch (err) {
+                logger.error("Error fetching conversations:", err);
+                setError("Failed to load conversations");
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        fetchConversations();
+
+        const interval = setInterval(fetchConversations, 5000);
+        return () => clearInterval(interval);
     }, []);
 
-    const getBuyerById = (id) => mockBuyers.find((b) => b.id === id);
-    const getConversationPartners = () => {
-        const partnerIds = new Set();
-        messages.forEach((msg) => {
-            const partnerId =
-                msg.senderId === mockBusiness.id ? msg.receiverId : msg.senderId;
-            partnerIds.add(partnerId);
-        });
-        return Array.from(partnerIds).map((id) => ({
-            id,
-            name: getBuyerById(id)?.name || "Unknown Buyer",
-            latestMessage: getLatestMessageWithBuyer(id),
-        }));
+    useEffect(() => {
+        if (!activeConversation) return;
+
+        async function fetchMessages() {
+            try {
+                const response = await fetch(`/api/messages?conversationId=${activeConversation.id}`);
+
+                if (!response.ok) {
+                    throw new Error(`Server responded with ${response.status}`);
+                }
+
+                const data = await response.json();
+                setActiveMessages(data.messages || []);
+
+                if (!readConversations.includes(activeConversation.id)) {
+                    setReadConversations(prev => [...prev, activeConversation.id]);
+                }
+            } catch (err) {
+                logger.error("Error fetching messages:", err);
+                setError("Failed to load messages");
+            }
+        }
+
+        fetchMessages();
+    }, [activeConversation, readConversations]);
+
+    const handleSendReply = async () => {
+        if (!reply.trim() || !activeConversation) return;
+
+        try {
+            setSending(true);
+            setError("");
+
+            const response = await fetch('/api/messages', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    conversationId: activeConversation.id,
+                    content: reply
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || "Failed to send message");
+            }
+
+            const data = await response.json();
+
+            setActiveMessages(prev => [...prev, data.message]);
+            setReply("");
+
+        } catch (err) {
+            logger.error("Error sending reply:", err);
+            setError(err.message || "Failed to send reply");
+        } finally {
+            setSending(false);
+        }
     };
 
-    const getLatestMessageWithBuyer = (buyerId) => {
-        const convMessages = messages.filter(
-            (msg) =>
-                (msg.senderId === buyerId && msg.receiverId === mockBusiness.id) ||
-                (msg.receiverId === buyerId && msg.senderId === mockBusiness.id)
-        );
-        return convMessages.sort(
-            (a, b) => new Date(b.created_at) - new Date(a.created_at)
-        )[convMessages.length - 1];
+    const formatTime = (dateString) => {
+        const date = new Date(dateString);
+        const now = new Date();
+
+        if (date.toDateString() === now.toDateString()) {
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        if (date.getFullYear() === now.getFullYear()) {
+            return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+        }
+
+        return date.toLocaleDateString();
     };
 
-    const getConversationWithBuyer = (buyerId) =>
-        messages
-            .filter(
-                (msg) =>
-                    (msg.senderId === buyerId && msg.receiverId === mockBusiness.id) ||
-                    (msg.receiverId === buyerId && msg.senderId === mockBusiness.id)
-            )
-            .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    const getLatestMessage = (conversation) => {
+        if (!conversation.messages || conversation.messages.length === 0) {
+            return { content: "No messages yet", created_at: conversation.created_at };
+        }
+        return conversation.messages[0];
+    };
 
-    const handleSendReply = () => {
-        if (!reply.trim()) return;
-
-        const newMessage = {
-            id: `msg-${Date.now()}`,
-            content: reply,
-            created_at: new Date().toISOString(),
-            senderId: mockBusiness.id,
-            receiverId: activeConversation.id,
-        };
-
-        setMessages((prev) => [...prev, newMessage]);
-        setReply("");
+    const openFullConversation = (conversationId) => {
+        router.push(`/messages/${conversationId}`);
     };
 
     const closeConversation = () => {
         setActiveConversation(null);
+        setActiveMessages([]);
         setReply("");
     };
 
     return (
-        <div className="flex flex-col w-full min-h-[calc(100vh-4em)] bg-gradient-to-b from-white to-blue-200 dark:from-blue-950 dark:to-background py-6 px-2 sm:px-6 md:px-10">
+        <div className="flex flex-col w-full min-h-[calc(100vh-8em)] bg-gradient-to-b from-white to-blue-200 dark:from-blue-950 dark:to-background py-6 px-2 sm:px-6 md:px-10">
             <h1 className="text-2xl font-semibold text-gray-800 dark:text-white mb-4">
                 Messages
             </h1>
 
-            <div className="flex flex-col gap-6">
-                {getConversationPartners().map((partner) => (
-                    <div
-                        key={partner.id}
-                        onClick={() => {
-                            setActiveConversation(partner);
-                            setReadConversations((prev) =>
-                                prev.includes(partner.id) ? prev : [...prev, partner.id]
-                            );
-                        }}
-                        className={`relative cursor-pointer bg-white dark:bg-neutral-800 rounded-xl shadow-md p-4 border hover:border-blue-500 transition ${
-                            activeConversation?.id === partner.id
-                                ? "border-blue-500"
-                                : "border-transparent"
-                        }`}
-                    >
-                        <div className="font-medium text-gray-800 dark:text-white">
-                            {partner.name}
-                        </div>
-                        <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
-                            {partner.latestMessage?.content}
-                        </p>
+            {loading && conversations.length === 0 ? (
+                <div className="flex justify-center items-center h-64">
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                </div>
+            ) : conversations.length === 0 ? (
+                <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-md p-6 text-center">
+                    <p className="text-gray-600 dark:text-gray-300">No conversations yet.</p>
+                </div>
+            ) : (
+                <div className="flex flex-col gap-6">
+                    {conversations.map((conversation) => {
+                        const latestMessage = getLatestMessage(conversation);
+                        const isUnread = !readConversations.includes(conversation.id) &&
+                            latestMessage.senderType === 'BUYER';
 
-                        {!readConversations.includes(partner.id) &&
-                            partner.latestMessage?.senderId !== mockBusiness.id && (
-                                <span className="absolute top-3 right-4 h-3 w-3 bg-blue-500 rounded-full" />
-                            )}
-                    </div>
-                ))}
-            </div>
+                        return (
+                            <div
+                                key={conversation.id}
+                                onClick={() => {
+                                    setActiveConversation(conversation);
+                                    if (!readConversations.includes(conversation.id)) {
+                                        setReadConversations(prev => [...prev, conversation.id]);
+                                    }
+                                }}
+                                className={`relative cursor-pointer bg-white dark:bg-neutral-800 rounded-xl shadow-md p-4 border hover:border-blue-500 transition ${
+                                    activeConversation?.id === conversation.id
+                                        ? "border-blue-500"
+                                        : "border-transparent"
+                                }`}
+                            >
+                                <div className="flex items-center">
+                                    <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-800 flex-shrink-0 mr-3 overflow-hidden">
+                                        {conversation.buyer.profile_img ? (
+                                            <img
+                                                src={conversation.buyer.profile_img}
+                                                alt={conversation.buyer.name}
+                                                className="h-full w-full object-cover"
+                                            />
+                                        ) : (
+                                            <div className="h-full w-full flex items-center justify-center bg-blue-500 text-white">
+                                                {conversation.buyer.name.charAt(0).toUpperCase()}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center justify-between">
+                                            <h3 className="font-medium text-gray-800 dark:text-white">
+                                                {conversation.buyer.name}
+                                            </h3>
+                                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                                                {formatTime(latestMessage.created_at)}
+                                            </span>
+                                        </div>
+
+                                        <p className="text-sm text-gray-600 dark:text-gray-300 truncate">
+                                            {latestMessage.content}
+                                        </p>
+
+                                        <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                            <span className="text-blue-500 dark:text-blue-400">
+                                                Re: {conversation.service.name}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {isUnread && (
+                                    <span className="absolute top-3 right-4 h-3 w-3 bg-blue-500 rounded-full" />
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
 
             {activeConversation && (
                 <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center px-4">
                     <div className="relative bg-white dark:bg-neutral-900 rounded-xl shadow-lg max-w-2xl w-full max-h-[90vh] overflow-hidden">
-                        <button
-                            onClick={closeConversation}
-                            className="p-3 font-bold absolute top-3 right-4 text-gray-500 hover:text-red-500 text-xl"
-                        >
-                            x
-                        </button>
-
-                        <div className="p-6">
-                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                                Conversation with {activeConversation.name}
-                            </h2>
-
-                            <div className="space-y-3 max-h-[300px] overflow-y-auto mb-4 pr-2">
-                                {getConversationWithBuyer(activeConversation.id).map((msg) => (
-                                    <div
-                                        key={msg.id}
-                                        className={`p-3 rounded-xl max-w-[80%] ${
-                                            msg.senderId === mockBusiness.id
-                                                ? "bg-blue-100 dark:bg-blue-700 ml-auto text-right"
-                                                : "bg-gray-100 dark:bg-neutral-700"
-                                        }`}
-                                    >
-                                        <p className="text-sm text-gray-800 dark:text-white">
-                                            {msg.content}
-                                        </p>
-                                        <span className="text-xs text-gray-500 dark:text-gray-400 block mt-1">
-                                          {new Date(msg.created_at).toLocaleString()}
-                                        </span>
+                        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+                            <div className="flex items-center">
+                                <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-800 flex-shrink-0 mr-3 overflow-hidden">
+                                    {activeConversation.buyer.profile_img ? (
+                                        <img
+                                            src={activeConversation.buyer.profile_img}
+                                            alt={activeConversation.buyer.name}
+                                            className="h-full w-full object-cover"
+                                        />
+                                    ) : (
+                                        <div className="h-full w-full flex items-center justify-center bg-blue-500 text-white">
+                                            {activeConversation.buyer.name.charAt(0).toUpperCase()}
+                                        </div>
+                                    )}
+                                </div>
+                                <div>
+                                    <h2 className="font-semibold text-gray-900 dark:text-white">
+                                        {activeConversation.buyer.name}
+                                    </h2>
+                                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                                        Re: {activeConversation.service.name}
                                     </div>
-                                ))}
+                                </div>
                             </div>
 
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => openFullConversation(activeConversation.id)}
+                                    className="text-blue-500 hover:text-blue-700 dark:hover:text-blue-300 text-sm"
+                                >
+                                    View Full
+                                </button>
+                                <button
+                                    onClick={closeConversation}
+                                    className="p-2 text-gray-500 hover:text-red-500 text-xl"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="p-4 max-h-[50vh] overflow-y-auto">
+                            {error && (
+                                <div className="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 p-3 rounded-lg mb-4">
+                                    {error}
+                                </div>
+                            )}
+
+                            {activeMessages.length === 0 ? (
+                                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                                    No messages yet. Send a message to start the conversation.
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    {activeMessages.map((message) => (
+                                        <div
+                                            key={message.id}
+                                            className={`p-3 rounded-xl max-w-[80%] ${
+                                                message.senderType === 'BUSINESS'
+                                                    ? 'bg-blue-100 dark:bg-blue-700 text-gray-800 dark:text-white ml-auto'
+                                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white'
+                                            }`}
+                                        >
+                                            <p className="text-sm">{message.content}</p>
+                                            <span className="text-xs text-gray-500 dark:text-gray-400 block mt-1">
+                                                {formatTime(message.created_at)}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="p-4 border-t border-gray-200 dark:border-gray-700">
                             <div className="flex w-full gap-2">
                                 <input
                                     value={reply}
@@ -191,12 +317,18 @@ export default function BPMessages() {
                                     type="text"
                                     placeholder="Type a reply..."
                                     className="w-full px-4 py-3 rounded-lg border bg-white dark:bg-neutral-800 dark:border-neutral-700 text-gray-800 dark:text-white"
+                                    disabled={sending}
                                 />
                                 <button
                                     onClick={handleSendReply}
-                                    className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+                                    disabled={!reply.trim() || sending}
+                                    className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    Send
+                                    {sending ? (
+                                        <div className="h-5 w-5 border-t-2 border-b-2 border-white rounded-full animate-spin"></div>
+                                    ) : (
+                                        "Send"
+                                    )}
                                 </button>
                             </div>
                         </div>
