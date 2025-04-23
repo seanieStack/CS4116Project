@@ -12,7 +12,8 @@ export default function ConversationPage({ params }) {
     const [conversation, setConversation] = useState(null);
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState("");
-    const [loading, setLoading] = useState(true);
+    const [initialLoading, setInitialLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [sending, setSending] = useState(false);
     const [error, setError] = useState("");
     const [user, setUser] = useState(null);
@@ -50,25 +51,39 @@ export default function ConversationPage({ params }) {
 
         async function fetchConversation() {
             try {
-                setLoading(true);
+                if (initialLoading) {
+                    setInitialLoading(true);
+                } else {
+                    setRefreshing(true);
+                }
+
                 const response = await fetch(`/api/messages?conversationId=${conversationId}`);
 
                 if (!response.ok) {
                     if (response.status === 404) {
-                        // router.push('/messages');
+                        router.push('/messages');
                         return;
                     }
                     throw new Error(`Server responded with ${response.status}`);
                 }
 
                 const data = await response.json();
-                setConversation(data.conversation);
-                setMessages(data.messages);
+
+                if (data.conversation) {
+                    setConversation(data.conversation);
+                }
+
+                if (data.messages) {
+                    if (initialLoading || data.messages.length !== messages.length) {
+                        setMessages(data.messages);
+                    }
+                }
             } catch (err) {
                 logger.error("Error fetching conversation:", err);
                 setError("Failed to load conversation");
             } finally {
-                setLoading(false);
+                setInitialLoading(false);
+                setRefreshing(false);
             }
         }
 
@@ -79,7 +94,7 @@ export default function ConversationPage({ params }) {
         }, 5000);
 
         return () => clearInterval(pollingInterval);
-    }, [conversationId, user, router]);
+    }, [conversationId, user, router, messages.length, initialLoading]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -139,19 +154,20 @@ export default function ConversationPage({ params }) {
         return groups;
     }, {});
 
-    if (loading) {
+    if (initialLoading) {
         return (
-                <div className="flex items-center justify-center min-h-[calc(100vh-8rem)] bg-gradient-to-b from-blue-100 to-white dark:from-blue-950 dark:to-gray-900">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-                </div>
+            <div className="flex items-center justify-center min-h-[calc(100vh-8rem)] bg-gradient-to-b from-blue-100 to-white dark:from-blue-950 dark:to-gray-900">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            </div>
         );
     }
 
     return (
-            <div className="flex flex-col min-h-[calc(100vh-8rem)] bg-gradient-to-b from-blue-100 to-white dark:from-blue-950 dark:to-gray-900">
-                <div className="container mx-auto p-4 flex-1 flex flex-col">
-                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg flex flex-col h-full">
-                        <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center">
+        <div className="flex flex-col min-h-[calc(100vh-8rem)] bg-gradient-to-b from-blue-100 to-white dark:from-blue-950 dark:to-gray-900">
+            <div className="container mx-auto p-4 flex-1 flex flex-col">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg flex flex-col h-full">
+                    <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                        <div className="flex items-center">
                             <button
                                 onClick={() => router.push('/messages')}
                                 className="mr-4 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white"
@@ -203,80 +219,85 @@ export default function ConversationPage({ params }) {
                             )}
                         </div>
 
-                        <div className="flex-1 p-4 overflow-y-auto">
-                            {error && (
-                                <div className="bg-red-100 dark:bg-red-800 text-red-800 dark:text-red-200 p-3 rounded-lg mb-4">
-                                    {error}
+                        {refreshing && (
+                            <div className="animate-spin h-5 w-5 border-t-2 border-b-2 border-blue-500 rounded-full"></div>
+                        )}
+                    </div>
+
+                    <div className="flex-1 p-4 overflow-y-auto">
+                        {error && (
+                            <div className="bg-red-100 dark:bg-red-800 text-red-800 dark:text-red-200 p-3 rounded-lg mb-4">
+                                {error}
+                            </div>
+                        )}
+
+                        {Object.entries(groupedMessages).map(([date, dateMessages]) => (
+                            <div key={date}>
+                                <div className="flex justify-center my-4">
+                                    <span className="px-3 py-1 bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs rounded-full">
+                                        {date}
+                                    </span>
                                 </div>
-                            )}
 
-                            {Object.entries(groupedMessages).map(([date, dateMessages]) => (
-                                <div key={date}>
-                                    <div className="flex justify-center my-4">
-                                        <span className="px-3 py-1 bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs rounded-full">
-                                            {date}
-                                        </span>
-                                    </div>
+                                {dateMessages.map((message) => {
+                                    const isOwn = (
+                                        (session?.role === 'BUYER' && message.senderType === 'BUYER') ||
+                                        (session?.role === 'BUSINESS' && message.senderType === 'BUSINESS')
+                                    );
 
-                                    {dateMessages.map((message) => {
-                                        const isOwn = (
-                                            (session?.role === 'BUYER' && message.senderType === 'BUYER') ||
-                                            (session?.role === 'BUSINESS' && message.senderType === 'BUSINESS')
-                                        );
-
-                                        return (
-                                            <div
-                                                key={message.id}
-                                                className={`mb-4 flex ${isOwn ? 'justify-end' : 'justify-start'}`}
-                                            >
-                                                <div className={`max-w-[70%] rounded-lg px-4 py-2 ${
+                                    return (
+                                        <div
+                                            key={message.id}
+                                            className={`mb-4 flex ${isOwn ? 'justify-end' : 'justify-start'}`}
+                                        >
+                                            <div className={`max-w-[70%] rounded-lg px-4 py-2 ${
+                                                isOwn
+                                                    ? 'bg-blue-500 text-white rounded-br-none'
+                                                    : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-bl-none'
+                                            }`}>
+                                                <p className="break-words">{message.content}</p>
+                                                <p className={`text-xs mt-1 ${
                                                     isOwn
-                                                        ? 'bg-blue-500 text-white rounded-br-none'
-                                                        : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-bl-none'
+                                                        ? 'text-blue-100'
+                                                        : 'text-gray-500 dark:text-gray-400'
                                                 }`}>
-                                                    <p className="break-words">{message.content}</p>
-                                                    <p className={`text-xs mt-1 ${
-                                                        isOwn
-                                                            ? 'text-blue-100'
-                                                            : 'text-gray-500 dark:text-gray-400'
-                                                    }`}>
-                                                        {formatTime(message.created_at)}
-                                                    </p>
-                                                </div>
+                                                    {formatTime(message.created_at)}
+                                                </p>
                                             </div>
-                                        );
-                                    })}
-                                </div>
-                            ))}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        ))}
 
-                            <div ref={messagesEndRef} />
-                        </div>
+                        <div ref={messagesEndRef} />
+                    </div>
 
-                        <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-                            <form onSubmit={handleSendMessage} className="flex">
-                                <input
-                                    type="text"
-                                    value={newMessage}
-                                    onChange={(e) => setNewMessage(e.target.value)}
-                                    placeholder="Type a message..."
-                                    className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-l-lg focus:outline-none"
-                                    disabled={sending}
-                                />
-                                <button
-                                    type="submit"
-                                    className="px-4 py-2 bg-blue-500 text-white rounded-r-lg hover:bg-blue-600 focus:outline-none disabled:bg-blue-300 dark:disabled:bg-blue-700"
-                                    disabled={sending || !newMessage.trim()}
-                                >
-                                    {sending ? (
-                                        <div className="h-5 w-5 border-t-2 border-b-2 border-white rounded-full animate-spin"></div>
-                                    ) : (
-                                        <PaperAirplaneIcon className="h-5 w-5" />
-                                    )}
-                                </button>
-                            </form>
-                        </div>
+                    <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+                        <form onSubmit={handleSendMessage} className="flex">
+                            <input
+                                type="text"
+                                value={newMessage}
+                                onChange={(e) => setNewMessage(e.target.value)}
+                                placeholder="Type a message..."
+                                className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-l-lg focus:outline-none"
+                                disabled={sending}
+                            />
+                            <button
+                                type="submit"
+                                className="px-4 py-2 bg-blue-500 text-white rounded-r-lg hover:bg-blue-600 focus:outline-none disabled:bg-blue-300 dark:disabled:bg-blue-700"
+                                disabled={sending || !newMessage.trim()}
+                            >
+                                {sending ? (
+                                    <div className="h-5 w-5 border-t-2 border-b-2 border-white rounded-full animate-spin"></div>
+                                ) : (
+                                    <PaperAirplaneIcon className="h-5 w-5" />
+                                )}
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>
+        </div>
     );
 }

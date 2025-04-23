@@ -12,6 +12,7 @@ export default function ServiceViewer({ service }) {
     const [rating, setRating] = useState(0);
     const [message, setMessage] = useState("");
     const [user, setUser] = useState(null);
+    const [session, setSession] = useState(null);
     const [hasPurchased, setHasPurchased] = useState(false);
     const [loading, setLoading] = useState(true);
     const [reviewSubmitted, setReviewSubmitted] = useState(false);
@@ -19,44 +20,43 @@ export default function ServiceViewer({ service }) {
     const [sendingMessage, setSendingMessage] = useState(false);
     const [messageSuccess, setMessageSuccess] = useState(false);
     const [conversation, setConversation] = useState(null);
+    const [isBuyer, setIsBuyer] = useState(false);
 
     useEffect(() => {
         async function fetchUserAndOrderData() {
             try {
                 setLoading(true);
                 const userData = await fetch('/api/user/current').then(res => res.json());
+                const sessionRes = await fetch('/api/session').then(res => res.json());
 
-                if (userData.user) {
-                    setUser(userData.user);
+                setUser(userData.user);
+                setSession(sessionRes.session);
 
+                const isUserBuyer = sessionRes.session?.role === "BUYER";
+                setIsBuyer(isUserBuyer);
+
+                if (userData.user && isUserBuyer) {
                     const orderCheck = await fetch(`/api/orders/check?serviceId=${service.id}&userId=${userData.user.id}`);
                     const orderData = await orderCheck.json();
-
                     setHasPurchased(orderData.hasPurchased);
 
                     const reviewCheck = await fetch(`/api/reviews/check?serviceId=${service.id}&userId=${userData.user.id}`);
                     const reviewData = await reviewCheck.json();
-
                     setReviewSubmitted(reviewData.hasReviewed);
 
-                    if (userData.user.id && service.businessId) {
-                        try {
-                            const conversationResponse = await fetch('/api/conversations', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    serviceId: service.id,
-                                    businessId: service.businessId
-                                })
-                            });
-
-                            if (conversationResponse.ok) {
-                                const conversationData = await conversationResponse.json();
-                                setConversation(conversationData.conversation);
+                    try {
+                        const conversationsResponse = await fetch('/api/conversations?role=buyer');
+                        if (conversationsResponse.ok) {
+                            const conversationsData = await conversationsResponse.json();
+                            const existingConversation = conversationsData.conversations?.find(
+                                conv => conv.serviceId === service.id && conv.businessId === service.businessId
+                            );
+                            if (existingConversation) {
+                                setConversation(existingConversation);
                             }
-                        } catch (err) {
-                            logger.error("Error checking for existing conversation:", err);
                         }
+                    } catch (err) {
+                        logger.error("Error checking for existing conversations:", err);
                     }
                 }
             } catch (err) {
@@ -73,8 +73,8 @@ export default function ServiceViewer({ service }) {
     const handleReviewSubmit = async (e) => {
         e.preventDefault();
 
-        if (!user) {
-            setError("You must be logged in to submit a review");
+        if (!user || !isBuyer) {
+            setError("You must be logged in as a buyer to submit a review");
             return;
         }
 
@@ -122,8 +122,8 @@ export default function ServiceViewer({ service }) {
     const handleMessageSubmit = async (e) => {
         e.preventDefault();
 
-        if (!user) {
-            setError("You must be logged in to send a message");
+        if (!user || !isBuyer) {
+            setError("You must be logged in as a buyer to send a message");
             return;
         }
 
@@ -220,126 +220,135 @@ export default function ServiceViewer({ service }) {
                             <p className="text-gray-600 dark:text-gray-300 mb-6">{service?.description || "No description available"}</p>
 
                             <button
-                                className="bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white px-4 py-2 rounded mb-8"
-                                onClick={() => redirect(`/purchase/${service?.id}`)}
+                                className={`${
+                                    user && isBuyer
+                                        ? "bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700"
+                                        : "bg-gray-400 dark:bg-gray-600 cursor-not-allowed"
+                                } text-white px-4 py-2 rounded mb-8`}
+                                onClick={() => {
+                                    if (user && isBuyer) {
+                                        redirect(`/purchase/${service?.id}`);
+                                    }
+                                }}
+                                disabled={!user || !isBuyer}
                             >
-                                Purchase Now - €{service?.price}
+                                {user && isBuyer
+                                    ? `Purchase Now - €${service?.price}`
+                                    : "Sign in as buyer to purchase"}
                             </button>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div>
-                                    <h4 className="font-semibold text-lg mb-3">Contact the Business</h4>
-
-                                    {!user && (
-                                        <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg mb-4 text-center">
-                                            <p>Please sign in to contact the business</p>
-                                        </div>
-                                    )}
-
-                                    {user && conversation && conversation.messages && conversation.messages.length > 0 ? (
+                                {user && isBuyer && (
+                                    <>
                                         <div>
-                                            <button
-                                                onClick={openConversation}
-                                                className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-lg transition-colors"
-                                            >
-                                                <ChatBubbleLeftIcon className="h-5 w-5" />
-                                                <span>View Conversation</span>
-                                            </button>
+                                            <h4 className="font-semibold text-lg mb-3">Contact the Business</h4>
+                                            {conversation && conversation.messages && conversation.messages.length > 0 ? (
+                                                <div>
+                                                    <button
+                                                        onClick={openConversation}
+                                                        className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-lg transition-colors"
+                                                    >
+                                                        <ChatBubbleLeftIcon className="h-5 w-5" />
+                                                        <span>View Conversation</span>
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <form onSubmit={handleMessageSubmit}>
+                                                    {error && error.includes("message") && (
+                                                        <div className="bg-red-100 text-red-800 dark:bg-red-600 dark:text-white p-2 mb-3 rounded-lg text-sm">
+                                                            {error}
+                                                        </div>
+                                                    )}
+
+                                                    {messageSuccess && (
+                                                        <div className="bg-green-100 text-green-800 dark:bg-green-700 dark:text-white p-2 mb-3 rounded-lg text-sm">
+                                                            Message sent successfully!
+                                                        </div>
+                                                    )}
+
+                                                    <textarea
+                                                        className="w-full p-2 mb-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                                                        placeholder="Your message to the business"
+                                                        value={message}
+                                                        onChange={(e) => setMessage(e.target.value)}
+                                                        rows={6}
+                                                        disabled={sendingMessage}
+                                                    />
+                                                    <button
+                                                        type="submit"
+                                                        className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white px-4 py-2 rounded disabled:bg-gray-400 dark:disabled:bg-gray-500 disabled:cursor-not-allowed"
+                                                        disabled={sendingMessage}
+                                                    >
+                                                        {sendingMessage ? "Sending..." : "Send Message"}
+                                                    </button>
+                                                </form>
+                                            )}
                                         </div>
-                                    ) : (
-                                        <form onSubmit={handleMessageSubmit}>
-                                            {error && (
-                                                <div className="bg-red-100 text-red-800 dark:bg-red-600 dark:text-white p-2 mb-3 rounded-lg text-sm">
-                                                    {error}
+
+                                        <div>
+                                            <h4 className="font-semibold text-lg mb-3">Leave a Review</h4>
+                                            {!hasPurchased && (
+                                                <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg mb-4 text-center">
+                                                    <p>You need to purchase this service before you can review it</p>
                                                 </div>
                                             )}
 
-                                            {messageSuccess && (
-                                                <div className="bg-green-100 text-green-800 dark:bg-green-700 dark:text-white p-2 mb-3 rounded-lg text-sm">
-                                                    Message sent successfully!
+                                            {hasPurchased && reviewSubmitted && (
+                                                <div className="bg-green-100 text-green-800 dark:bg-green-700 dark:text-white p-4 rounded-lg mb-4 text-center">
+                                                    <p>Thank you for your review!</p>
                                                 </div>
                                             )}
 
-                                            <textarea
-                                                className="w-full p-2 mb-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
-                                                placeholder="Your message to the business"
-                                                value={message}
-                                                onChange={(e) => setMessage(e.target.value)}
-                                                rows={6}
-                                                disabled={!user || sendingMessage}
-                                            />
-                                            <button
-                                                type="submit"
-                                                className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white px-4 py-2 rounded disabled:bg-gray-400 dark:disabled:bg-gray-500 disabled:cursor-not-allowed"
-                                                disabled={!user || sendingMessage}
-                                            >
-                                                {sendingMessage ? "Sending..." : "Send Message"}
-                                            </button>
-                                        </form>
-                                    )}
-                                </div>
-
-                                <div>
-                                    <h4 className="font-semibold text-lg mb-3">Leave a Review</h4>
-
-                                    {!user && (
-                                        <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg mb-4 text-center">
-                                            <p>Please sign in to leave a review</p>
-                                        </div>
-                                    )}
-
-                                    {user && !hasPurchased && (
-                                        <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg mb-4 text-center">
-                                            <p>You need to purchase this service before you can review it</p>
-                                        </div>
-                                    )}
-
-                                    {user && hasPurchased && reviewSubmitted && (
-                                        <div className="bg-green-100 text-green-800 dark:bg-green-700 dark:text-white p-4 rounded-lg mb-4 text-center">
-                                            <p>Thank you for your review!</p>
-                                        </div>
-                                    )}
-
-                                    {user && hasPurchased && !reviewSubmitted && (
-                                        <form onSubmit={handleReviewSubmit}>
-                                            {error && error.includes("review") && (
-                                                <div className="bg-red-100 text-red-800 dark:bg-red-600 dark:text-white p-2 mb-3 rounded-lg text-sm">
-                                                    {error}
-                                                </div>
-                                            )}
-                                            <textarea
-                                                className="w-full p-2 mb-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
-                                                placeholder="Your review"
-                                                value={review}
-                                                onChange={(e) => setReview(e.target.value)}
-                                                rows={6}
-                                                disabled={loading}
-                                            />
-                                            <div className="flex items-center justify-between">
-                                                <button
-                                                    type="submit"
-                                                    className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white px-4 py-2 rounded disabled:bg-gray-400 dark:disabled:bg-gray-500"
-                                                    disabled={loading}
-                                                >
-                                                    {loading ? "Submitting..." : "Submit Review"}
-                                                </button>
-                                                <div className="flex">
-                                                    {[1, 2, 3, 4, 5].map((star) => (
+                                            {hasPurchased && !reviewSubmitted && (
+                                                <form onSubmit={handleReviewSubmit}>
+                                                    {error && error.includes("review") && (
+                                                        <div className="bg-red-100 text-red-800 dark:bg-red-600 dark:text-white p-2 mb-3 rounded-lg text-sm">
+                                                            {error}
+                                                        </div>
+                                                    )}
+                                                    <textarea
+                                                        className="w-full p-2 mb-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                                                        placeholder="Your review"
+                                                        value={review}
+                                                        onChange={(e) => setReview(e.target.value)}
+                                                        rows={6}
+                                                        disabled={loading}
+                                                    />
+                                                    <div className="flex items-center justify-between">
                                                         <button
-                                                            key={star}
-                                                            type="button"
-                                                            className={`text-2xl ${star <= rating ? "text-amber-500 dark:text-yellow-500" : "text-gray-300 dark:text-gray-400"}`}
-                                                            onClick={() => setRating(star)}
+                                                            type="submit"
+                                                            className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white px-4 py-2 rounded disabled:bg-gray-400 dark:disabled:bg-gray-500"
                                                             disabled={loading}
                                                         >
-                                                            ★
+                                                            {loading ? "Submitting..." : "Submit Review"}
                                                         </button>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        </form>
-                                    )}
-                                </div>
+                                                        <div className="flex">
+                                                            {[1, 2, 3, 4, 5].map((star) => (
+                                                                <button
+                                                                    key={star}
+                                                                    type="button"
+                                                                    className={`text-2xl ${star <= rating ? "text-amber-500 dark:text-yellow-500" : "text-gray-300 dark:text-gray-400"}`}
+                                                                    onClick={() => setRating(star)}
+                                                                    disabled={loading}
+                                                                >
+                                                                    ★
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </form>
+                                            )}
+                                        </div>
+                                    </>
+                                )}
+
+                                {(!user || !isBuyer) && (
+                                    <div className="md:col-span-2">
+                                        <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg mb-4 text-center">
+                                            <p>Please sign in as a buyer to contact the business or leave reviews.</p>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
