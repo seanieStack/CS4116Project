@@ -19,9 +19,9 @@ export default function MessagesList({ messages }) {
                     <tbody className="bg-white dark:bg-gray-700 divide-y divide-gray-200 dark:divide-gray-600">
                     {messages.map((message) => (
                         <tr key={message.id} className="hover:bg-gray-50 dark:hover:bg-gray-650">
-                            <td className="px-6 py-4 text-gray-800 dark:text-gray-200">{message.sender}</td>
-                            <td className="px-6 py-4 text-gray-800 dark:text-gray-200">{message.message}</td>
-                            <td className="px-6 py-4 text-gray-800 dark:text-gray-200">{new Date(message.date).toLocaleDateString()}</td>
+                            <td className="px-6 py-4 text-gray-800 dark:text-gray-200">{message.senderId} - {message.senderType}</td>
+                            <td className="px-6 py-4 text-gray-800 dark:text-gray-200">{message.content}</td>
+                            <td className="px-6 py-4 text-gray-800 dark:text-gray-200">{new Date(message.created_at).toLocaleDateString()}</td>
                         </tr>
                     ))}
                     </tbody>
