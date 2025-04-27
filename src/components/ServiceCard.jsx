@@ -1,26 +1,7 @@
 import Link from "next/link";
-import React, { useEffect, useState } from 'react';
 
 export default function ServiceCard({ service }) {
-    const [averageRating, setAverageRating] = useState(null);
-    const [totalReviews, setTotalReviews] = useState(0);
-
-    useEffect(() => {
-        const fetchReviews = async () => {
-            try {
-                const response = await fetch(`/api/reviews?serviceId=${service.id}`);
-                const data = await response.json();
-
-                if (data.averageRating !== undefined) {
-                    setAverageRating(data.averageRating);
-                    setTotalReviews(data.totalReviews);
-                }
-            } catch (error) {
-                console.error('Error fetching reviews:', error);
-            }
-        };
-        fetchReviews();
-    }, [service.id]);
+    const rating = service.rating;
 
     return (
         <div className="border border-gray-200 dark:border-gray-700 p-4 rounded-lg shadow-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-white hover:shadow-xl transition-shadow duration-300">
@@ -42,13 +23,13 @@ export default function ServiceCard({ service }) {
                         </p>
 
                         <div className="flex items-center mt-1 justify-end">
-                            {averageRating !== null && (
+                            {rating !== null && (
                                 [1, 2, 3, 4, 5].map((star) => (
                                     <span
                                         key={star}
                                         className="text-2xl cursor-pointer text-amber-500 dark:text-amber-400"
                                     >
-                                        {averageRating >= star ? '★' : '☆'}
+                                        {rating >= star ? '★' : '☆'}
                                     </span>
                                 ))
                             )}

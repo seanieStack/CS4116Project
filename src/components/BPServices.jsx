@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import ImageUploader from "@/components/ImageUploader";
 import BPServiceCard from "@/components/BPServiceCard";
+import logger from "@/util/logger";
 
 export default function BPServices({ user }) {
     const [services, setServices] = useState([]);
@@ -10,6 +11,8 @@ export default function BPServices({ user }) {
     const [showForm, setShowForm] = useState(false);
     const [editingServiceId, setEditingServiceId] = useState(null);
     const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+
+    const DEFAULT_SERVICE_IMAGE = "https://dummyimage.com/400x400/0000ff/fff&text=Service";
 
     const [formData, setFormData] = useState({
         name: "",
@@ -35,7 +38,7 @@ export default function BPServices({ user }) {
                 const data = await res.json();
                 setServices(data);
             } catch (err) {
-                console.error("Failed to load services", err);
+                logger.error("Failed to load services", err);
             } finally {
                 setLoading(false);
             }
@@ -64,6 +67,12 @@ export default function BPServices({ user }) {
         if (!formData.name || !formData.businessId) return;
 
         try {
+            const submissionData = { ...formData };
+
+            if (!submissionData.image || submissionData.image.trim() === "") {
+                submissionData.image = DEFAULT_SERVICE_IMAGE;
+            }
+
             const url = editingServiceId
                 ? `/api/services/${editingServiceId}`
                 : `/api/services`;
@@ -73,13 +82,13 @@ export default function BPServices({ user }) {
             const response = await fetch(url, {
                 method,
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(formData),
+                body: JSON.stringify(submissionData),
             });
 
             const updatedService = await response.json();
 
             if (!updatedService.id) {
-                console.error("Invalid response:", updatedService);
+                logger.error("Invalid response:", updatedService);
                 return;
             }
 
@@ -101,7 +110,7 @@ export default function BPServices({ user }) {
             setEditingServiceId(null);
             setShowForm(false);
         } catch (err) {
-            console.error("Failed to submit service", err);
+            logger.error("Failed to submit service", err);
         }
     };
 
@@ -161,19 +170,19 @@ export default function BPServices({ user }) {
                         <p className="text-gray-600 dark:text-gray-400">Loading services...</p>
                     ) : (
                         services.length > 0 ? (
-                                services.map((service) => (
-                                    <BPServiceCard
-                                        key={service.id}
-                                        service={service}
-                                        onEdit={handleEdit}
-                                        onDelete={setConfirmDeleteId}
-                                    />
-                                ))
-                            ) : (
-                                <p className="text-gray-600 dark:text-gray-400 col-span-full text-center">
-                                    No active services
-                                </p>
-                            )
+                            services.map((service) => (
+                                <BPServiceCard
+                                    key={service.id}
+                                    service={service}
+                                    onEdit={handleEdit}
+                                    onDelete={setConfirmDeleteId}
+                                />
+                            ))
+                        ) : (
+                            <p className="text-gray-600 dark:text-gray-400 col-span-full text-center">
+                                No active services
+                            </p>
+                        )
                     )}
                 </div>
 
@@ -228,9 +237,13 @@ export default function BPServices({ user }) {
                                         maxSizeMB={2}
                                         acceptedFileTypes="image/jpeg, image/png"
                                     />
-                                    {formData.image && (
+                                    {formData.image ? (
                                         <p className="text-green-600 dark:text-green-400 text-sm mt-2">
                                             Image uploaded successfully!
+                                        </p>
+                                    ) : (
+                                        <p className="text-gray-500 dark:text-gray-400 text-sm mt-2">
+                                            No image uploaded. A default image will be used.
                                         </p>
                                     )}
                                 </div>
