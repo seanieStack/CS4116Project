@@ -1,6 +1,7 @@
 import Navbar from "@/components/Navbar";
 import AdminNav from "@/components/APNav";
 import ServicesList from "@/components/ServicesList";
+import {prisma} from "@/lib/prisma";
 import Footer from "@/components/Footer";
 
 export default async function ServicesPage() {

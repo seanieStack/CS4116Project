@@ -1,6 +1,7 @@
 import Navbar from "@/components/Navbar";
 import AdminNav from "@/components/APNav";
 import UsersList from "@/components/UsersList";
+import {prisma} from "@/lib/prisma";
 import Footer from "@/components/Footer";
 
 export default async function UsersPage() {
