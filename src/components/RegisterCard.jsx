@@ -4,9 +4,11 @@ import InputBox from "@/components/InputBox";
 import Link from "next/link";
 import { signUp } from "@/auth/nextjs/actions";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import logger from "@/util/logger";
 
 export default function RegisterCard() {
+    const router = useRouter();
     const [formData, setFormData] = useState({
         email: "",
         password: "",
@@ -29,10 +31,13 @@ export default function RegisterCard() {
                 return;
             }
 
-            const errorMessage = await signUp(formData);
-            if (errorMessage) {
-                setError(errorMessage);
-                logger.error("RegisterCard: Registration failed", { error: errorMessage });
+            const result = await signUp(formData);
+
+            if (!result.success) {
+                setError(result.error || "Registration failed");
+                logger.warn("RegisterCard: Registration failed", { error: result.error });
+            } else if (result.redirectPath) {
+                router.push(result.redirectPath);
             }
         } catch (err) {
             setError("An unexpected error occurred. Please try again.");

@@ -10,12 +10,14 @@ export default function BPMessages() {
     const [activeConversation, setActiveConversation] = useState(null);
     const [activeMessages, setActiveMessages] = useState([]);
     const [reply, setReply] = useState("");
-    const [loading, setLoading] = useState(true);
+    const [initialLoading, setInitialLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [sending, setSending] = useState(false);
     const [error, setError] = useState("");
     const [readConversations, setReadConversations] = useState([]);
 
     const readConversationsRef = useRef(readConversations);
+    const initialFetchComplete = useRef(false);
 
     useEffect(() => {
         readConversationsRef.current = readConversations;
@@ -24,7 +26,12 @@ export default function BPMessages() {
     useEffect(() => {
         async function fetchConversations() {
             try {
-                setLoading(true);
+                if (!initialFetchComplete.current) {
+                    setInitialLoading(true);
+                } else {
+                    setRefreshing(true);
+                }
+
                 const response = await fetch('/api/conversations?role=business');
 
                 if (!response.ok) {
@@ -45,11 +52,13 @@ export default function BPMessages() {
                 });
 
                 setReadConversations(Array.from(readIds));
+                initialFetchComplete.current = true;
             } catch (err) {
                 logger.error("Error fetching conversations:", err);
                 setError("Failed to load conversations");
             } finally {
-                setLoading(false);
+                setInitialLoading(false);
+                setRefreshing(false);
             }
         }
 
@@ -157,7 +166,7 @@ export default function BPMessages() {
                 Messages
             </h1>
 
-            {loading && conversations.length === 0 ? (
+            {initialLoading ? (
                 <div className="flex justify-center items-center h-64">
                     <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
                 </div>
@@ -333,6 +342,12 @@ export default function BPMessages() {
                             </div>
                         </div>
                     </div>
+                </div>
+            )}
+
+            {refreshing && (
+                <div className="fixed bottom-4 right-4 bg-white dark:bg-gray-800 rounded-full p-2 shadow-lg">
+                    <div className="animate-spin h-5 w-5 border-t-2 border-b-2 border-blue-500 rounded-full"></div>
                 </div>
             )}
         </div>
