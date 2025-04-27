@@ -196,9 +196,12 @@ export async function signIn(data) {
     }
 
     if (accountType === "ADMIN") {
-        redirect("/");
-        //TODO: replace with admin panel when implemented
-    } else {
+        redirect("/admin");
+    }
+    else if (accountType === "BUSINESS") {
+        redirect("/businesspanel");
+    }
+    else {
         redirect("/");
     }
 }

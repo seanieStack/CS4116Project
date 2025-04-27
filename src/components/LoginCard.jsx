@@ -12,7 +12,8 @@ export default function LoginCard() {
         password: ""
     });
 
-    const [error, setError] = useState(null);
+    const [error, setError] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         logger.log("LoginCard: Component initialized");
@@ -20,9 +21,20 @@ export default function LoginCard() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const error = await signIn(formData)
-        if (error) {
-            setError(error);
+        setIsSubmitting(true);
+        setError("");
+
+        try {
+            const errorMessage = await signIn(formData);
+            if (errorMessage) {
+                setError(errorMessage);
+                logger.error("LoginCard: Authentication failed", { error: errorMessage });
+            }
+        } catch (err) {
+            setError("An unexpected error occurred. Please try again.");
+            logger.error("LoginCard: Unexpected error during sign in", err);
+        } finally {
+            setIsSubmitting(false);
         }
     }
 
@@ -32,7 +44,7 @@ export default function LoginCard() {
             logger.log(`LoginCard: Field "${name}" changed`);
 
             if (error) {
-                setError(null);
+                setError("");
             }
 
             setFormData({
@@ -49,7 +61,13 @@ export default function LoginCard() {
             <h2 className="text-2xl font-bold text-center mb-6">
                 Login
             </h2>
-            {error && error.message && <div className="text-red-500 text-sm mb-4">{error.message}</div>}
+
+            {error && (
+                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 dark:bg-red-900 dark:text-red-100 dark:border-red-700">
+                    {error}
+                </div>
+            )}
+
             <form onSubmit={handleSubmit}>
                 <div className="py-2">
                     <InputBox
@@ -72,8 +90,9 @@ export default function LoginCard() {
                 <button
                     type="submit"
                     className="w-full bg-blue-500 text-white py-3 rounded-md mt-4 hover:bg-blue-600 disabled:opacity-50 disabled:pointer-events-none"
+                    disabled={isSubmitting}
                 >
-                    Login
+                    {isSubmitting ? "Logging in..." : "Login"}
                 </button>
             </form>
 
