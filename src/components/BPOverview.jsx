@@ -7,9 +7,9 @@ export default async function BPOverview() {
     const businessName = await getBusinessName();
     const services = await getBusinessServices();
     const serviceCount = services.length;
-    const averageRating = getAverageRatingForBusiness();
-    const totalOrders = getTotalOrdersForBusiness();
-    const profit = getProfitForBusiness();
+    const averageRating = await getAverageRatingForBusiness();
+    const totalOrders = await getTotalOrdersForBusiness();
+    const profit = await getProfitForBusiness();
 
     return (
         <div className="flex w-full h-[calc(100vh-4em)] bg-gradient-to-b bg-blue-200 from-white dark:from-blue-950 dark:bg-background">
@@ -35,7 +35,7 @@ export default async function BPOverview() {
                                 Profit Accumulated
                             </h3>
                             <p className="text-4xl font-bold text-gray-900 dark:text-white mt-6">
-                                ${profit}
+                                ${profit.toFixed(2)}
                             </p>
                         </div>
                         <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-lg p-4 h-40 flex flex-col text-center pt-3 pb-4">
@@ -43,7 +43,7 @@ export default async function BPOverview() {
                                 Average Rating:
                             </h3>
                             <p className="text-4xl font-bold text-gray-900 dark:text-white mt-6">
-                                {averageRating}/5.0
+                                {averageRating.toFixed(2)}/5.0
                             </p>
                         </div>
                         <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-lg p-4 h-40 flex flex-col text-center pt-3 pb-4">
