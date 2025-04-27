@@ -4,7 +4,7 @@ export default function UsersList({ buyers }) {
     return (
         <div className="overflow-x-auto p-4">
             <div className="bg-white dark:bg-gray-700 shadow-lg rounded-lg p-4 border border-gray-200 dark:border-gray-600">
-                <table className="min-w-full divide-y divide-gray-600">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
                     <thead className="bg-gray-100 dark:bg-gray-600">
                         <tr>
                             <th className="text-left px-6 py-3 text-gray-700 dark:text-white font-semibold uppercase text-sm tracking-wider">
