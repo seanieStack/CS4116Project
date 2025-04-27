@@ -4,9 +4,11 @@ import { useState, useEffect } from "react";
 import InputBox from "@/components/InputBox";
 import Link from "next/link";
 import { signIn } from "@/auth/nextjs/actions";
+import { useRouter } from "next/navigation";
 import logger from "@/util/logger";
 
 export default function LoginCard() {
+    const router = useRouter();
     const [formData, setFormData] = useState({
         email: "",
         password: ""
@@ -25,10 +27,13 @@ export default function LoginCard() {
         setError("");
 
         try {
-            const errorMessage = await signIn(formData);
-            if (errorMessage) {
-                setError(errorMessage);
-                logger.error("LoginCard: Authentication failed", { error: errorMessage });
+            const result = await signIn(formData);
+
+            if (!result.success) {
+                setError(result.error || "Authentication failed");
+                logger.warn("LoginCard: Authentication failed", { error: result.error });
+            } else if (result.redirectPath) {
+                router.push(result.redirectPath);
             }
         } catch (err) {
             setError("An unexpected error occurred. Please try again.");
