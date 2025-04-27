@@ -22,6 +22,10 @@ export async function POST(req) {
       data: { banned: banned },
     });
 
+    prisma.session.delete({
+      where: { targetId: userId, targetType: "BUYER" },
+    });
+
     return NextResponse.json({ message: "Buyer ban status updated" });
   } catch (error) {
     console.error(error);
