@@ -169,6 +169,11 @@ export async function signIn(data) {
         return { success: false, error: "Error retrieving account information. Please try again" };
     }
 
+    if (user && user.banned){
+        logger.warn(`Sign in failed: Account is banned for ${data.email}`);
+        return { success: false, error: "Your account has been banned. Please contact support" };
+    }
+
     try {
         const account = user || business || admin;
         if (!await comparePassword(account.password, data.password, account.salt)) {
