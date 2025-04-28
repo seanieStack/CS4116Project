@@ -50,7 +50,7 @@ export default function ServicesHolder() {
     const [debouncedMaxPrice, setDebouncedMaxPrice] = useState('');
     const [sortBy, setSortBy] = useState('');
 
-    const filterOptions = ["Services", "Review", "Cloud"];
+    const filterOptions = ["Pro", "Platform", "Suite"];
 
     useEffect(() => {
         const timer = setTimeout(() => {
