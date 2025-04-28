@@ -1,4 +1,3 @@
-
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/auth/nextjs/currentUser';
@@ -74,14 +73,37 @@ export async function POST(request) {
             );
         }
 
-        const review = await prisma.review.create({
-            data: {
-                rating: numericRating,
-                comment: comment || null,
-                customerId: user.id,
-                businessId: businessId,
-                serviceId: serviceId
-            }
+        const review = await prisma.$transaction(async (prisma) => {
+            const newReview = await prisma.review.create({
+                data: {
+                    rating: numericRating,
+                    comment: comment || null,
+                    customerId: user.id,
+                    businessId: businessId,
+                    serviceId: serviceId
+                }
+            });
+
+            const allReviews = await prisma.review.findMany({
+                where: {
+                    serviceId: serviceId
+                },
+                select: {
+                    rating: true
+                }
+            });
+
+            const totalRating = allReviews.reduce((sum, review) => sum + review.rating, 0);
+            const averageRating = allReviews.length > 0 ? totalRating / allReviews.length : 0;
+
+            await prisma.service.update({
+                where: { id: serviceId },
+                data: {
+                    rating: averageRating
+                }
+            });
+
+            return newReview;
         });
 
         logger.log(`Review created: ${review.id} for service ${serviceId} by user ${user.id}`);
@@ -135,12 +157,14 @@ export async function GET(request) {
             }
         });
 
-        const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
-        const averageRating = reviews.length > 0 ? totalRating / reviews.length : 0;
+        const service = await prisma.service.findUnique({
+            where: { id: serviceId },
+            select: { rating: true }
+        });
 
         return NextResponse.json({
             reviews,
-            averageRating: parseFloat(averageRating.toFixed(1)),
+            averageRating: service?.rating || 0,
             totalReviews: reviews.length
         });
     } catch (error) {
