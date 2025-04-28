@@ -15,5 +15,5 @@ export async function getAverageRatingForBusiness() {
         },
     });
 
-    return result._avg.rating ?? 0;
+    return (result._avg.rating ?? 0);
 }

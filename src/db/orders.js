@@ -28,6 +28,43 @@ export async function getProfitForBusiness() {
     });
 
     return orders.reduce((sum, order) => {
-        return sum + (order.product?.price || 0);
+            return sum + (order.product?.price || 0);
+        }, 0)
+}
+
+export async function getTotalSales() {
+    const orders = await prisma.order.findMany({
+        include: {
+            product: true,
+        },
+    });
+
+    return orders.reduce((sum, order) => {
+        return sum + (order.product.price || 0);
     }, 0);
+}
+
+export async function getAverageTransactionsPerDay() {
+    const orders = await prisma.order.findMany({
+        orderBy: {
+            created_at: 'asc',
+        },
+    });
+
+    if (orders.length === 0) {
+        return 0;
+    }
+
+    const totalTransactions = orders.length;
+
+    const firstOrderDate = orders[0].created_at;
+    const now = new Date();
+
+    const diffInDays = Math.max(
+        Math.floor((now.getTime() - firstOrderDate.getTime()) / (1000 * 60 * 60 * 24)),
+        1
+    );
+
+    return totalTransactions / diffInDays;
+
 }
