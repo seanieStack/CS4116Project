@@ -29,7 +29,7 @@ export async function getProfitForBusiness() {
 
     return orders.reduce((sum, order) => {
             return sum + (order.product?.price || 0);
-        }, 0).toFixed(2)
+        }, 0)
 }
 
 export async function getTotalSales() {
